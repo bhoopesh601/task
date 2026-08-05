@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>React Todo Application – Project Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary:#4f46e5; --primary-lt:#6366f1; --accent:#06b6d4; --accent2:#8b5cf6;
+      --success:#10b981; --warning:#f59e0b; --danger:#ef4444;
+      --bg:#0f0e17; --bg-card:#1a1929; --border:rgba(99,102,241,0.25);
+      --text-main:#e2e8f0; --text-muted:#94a3b8; --text-head:#f8fafc;
+      --gradient:linear-gradient(135deg,#4f46e5 0%,#06b6d4 100%);
+      --font-body:'Inter',sans-serif; --font-code:'JetBrains Mono',monospace;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:var(--font-body);background:var(--bg);color:var(--text-main);font-size:15px;line-height:1.75}
+    .page-wrapper{max-width:1100px;margin:0 auto;padding:0 24px 80px}
+
+    /* COVER */
+    .cover{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;padding:60px 24px}
+    .cover::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(79,70,229,.35) 0%,transparent 70%),radial-gradient(ellipse 60% 40% at 100% 100%,rgba(6,182,212,.25) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 0% 100%,rgba(139,92,246,.2) 0%,transparent 60%);pointer-events:none}
+    .cover-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(79,70,229,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(79,70,229,.07) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+    .cover-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(79,70,229,.2);border:1px solid rgba(99,102,241,.4);color:#a5b4fc;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:6px 20px;border-radius:999px;margin-bottom:36px;position:relative}
+    .cover-title{font-size:clamp(36px,6vw,72px);font-weight:900;letter-spacing:-.03em;line-height:1.1;position:relative;margin-bottom:8px}
+    .gradient-text{background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .cover-subtitle{font-size:clamp(18px,3vw,26px);font-weight:300;color:var(--text-muted);position:relative;margin-bottom:48px}
+    .cover-divider{width:80px;height:3px;background:var(--gradient);border-radius:99px;margin:0 auto 48px;position:relative}
+    .cover-meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;width:100%;max-width:800px;position:relative}
+    .cover-meta-card{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:16px;padding:20px 24px;backdrop-filter:blur(10px);text-align:left;transition:border-color .3s}
+    .cover-meta-card:hover{border-color:rgba(99,102,241,.6)}
+    .meta-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+    .meta-value{font-size:15px;font-weight:600;color:var(--text-head)}
+    .cover-tech-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;position:relative;margin-top:48px}
+    .tech-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:999px;font-size:13px;font-weight:600;border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--text-main)}
+    .tech-pill .dot{width:8px;height:8px;border-radius:50%}
+
+    /* TOC */
+    .toc-section{padding:60px 0 20px}
+    .toc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:28px}
+    .toc-item{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text-main);font-size:14px;font-weight:500;transition:all .25s}
+    .toc-item:hover{border-color:var(--primary-lt);background:rgba(79,70,229,.15);transform:translateX(4px);color:#a5b4fc}
+    .toc-num{font-size:11px;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;min-width:24px}
+
+    /* SECTIONS */
+    .section{padding:64px 0 24px;border-top:1px solid rgba(99,102,241,.1)}
+    .section-label{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+    .section-title{font-size:clamp(24px,4vw,36px);font-weight:800;letter-spacing:-.02em;color:var(--text-head);margin-bottom:6px}
+    .section-subtitle{font-size:15px;color:var(--text-muted);margin-bottom:36px;max-width:700px}
+    .subsection-title{font-size:20px;font-weight:700;color:var(--text-head);margin:40px 0 16px;display:flex;align-items:center;gap:10px}
+    .subsection-title::before{content:'';width:4px;height:22px;border-radius:4px;background:var(--gradient);display:block;flex-shrink:0}
+    h4.mini-title{font-size:15px;font-weight:700;color:#a5b4fc;margin:24px 0 10px}
+
+    /* CARDS */
+    .card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px 32px;margin-bottom:24px}
+    .feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:20px}
+    .feature-item{display:flex;align-items:flex-start;gap:10px;padding:14px 18px;background:rgba(79,70,229,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;font-size:14px;font-weight:500}
+    .feature-item .icon{font-size:18px;flex-shrink:0;margin-top:1px}
+    .callout{border-left:4px solid var(--primary);background:rgba(79,70,229,.1);border-radius:0 12px 12px 0;padding:16px 20px;margin:20px 0;font-size:14px;color:var(--text-muted)}
+    .callout.success{border-color:var(--success);background:rgba(16,185,129,.08)}
+    .callout.warning{border-color:var(--warning);background:rgba(245,158,11,.08)}
+
+    /* TABLES */
+    .table-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--border);margin:20px 0 32px}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    thead tr{background:linear-gradient(90deg,rgba(79,70,229,.3),rgba(6,182,212,.2))}
+    thead th{padding:14px 20px;text-align:left;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#a5b4fc;white-space:nowrap}
+    tbody tr{border-top:1px solid rgba(99,102,241,.1);transition:background .2s}
+    tbody tr:hover{background:rgba(79,70,229,.07)}
+    tbody td{padding:14px 20px;color:var(--text-main);vertical-align:top}
+    .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.06em}
+    .badge-created{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.3)}
+    .badge-modified{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
+    .badge-passed{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.3)}
+    .badge-loc{background:rgba(79,70,229,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.3);font-family:var(--font-code)}
+
+    /* CODE */
+    .code-wrap{background:#0d0c1a;border:1px solid rgba(99,102,241,.2);border-radius:12px;margin:16px 0 24px;overflow:hidden}
+    .code-header{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:rgba(99,102,241,.1);border-bottom:1px solid rgba(99,102,241,.15)}
+    .code-lang{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+    .code-dots{display:flex;gap:6px}
+    .code-dots span{width:10px;height:10px;border-radius:50%}
+    .code-dots span:nth-child(1){background:#ef4444}
+    .code-dots span:nth-child(2){background:#f59e0b}
+    .code-dots span:nth-child(3){background:#10b981}
+    pre{padding:20px 24px;overflow-x:auto;font-family:var(--font-code);font-size:13.5px;line-height:1.65;color:#c4c9d4}
+    code{font-family:var(--font-code);font-size:13px;background:rgba(99,102,241,.15);padding:2px 7px;border-radius:5px;color:#a5b4fc}
+
+    /* TREE */
+    .tree{font-family:var(--font-code);font-size:13.5px;line-height:1.9;color:#cbd5e1}
+    .tree .dir{color:#7dd3fc;font-weight:600}
+    .tree .jsx{color:#c792ea}
+    .tree .js{color:#fbbf24}
+    .tree .css{color:#34d399}
+    .tree .json{color:#f97316}
+    .tree .md{color:#94a3b8}
+    .tree .html{color:#f472b6}
+
+    /* CMD CARDS */
+    .cmd-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:20px}
+    .cmd-header{display:flex;align-items:center;gap:10px;padding:14px 20px;background:linear-gradient(90deg,rgba(79,70,229,.2),transparent);border-bottom:1px solid var(--border)}
+    .cmd-icon{font-size:18px}
+    .cmd-title{font-size:15px;font-weight:700;color:var(--text-head)}
+    .cmd-body{padding:16px 20px}
+    .cmd-body p{font-size:14px;color:var(--text-muted);line-height:1.7}
+    .cmd-when{font-size:12px;color:var(--accent);margin-top:8px;font-weight:600}
+
+    /* WORKFLOW */
+    .workflow{position:relative;padding-left:40px}
+    .workflow::before{content:'';position:absolute;left:18px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--primary),var(--accent),transparent);border-radius:1px}
+    .workflow-step{position:relative;margin-bottom:28px}
+    .workflow-step::before{content:'';position:absolute;left:-30px;top:6px;width:14px;height:14px;border-radius:50%;background:var(--gradient);border:2px solid var(--bg)}
+    .workflow-step-num{font-size:11px;font-weight:800;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+    .workflow-step-title{font-size:16px;font-weight:700;color:var(--text-head);margin-bottom:6px}
+    .workflow-step p{font-size:14px;color:var(--text-muted)}
+
+    /* IMPROVEMENTS */
+    .improvements-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:20px}
+    .improvement-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:22px 24px;transition:all .3s}
+    .improvement-card:hover{border-color:rgba(99,102,241,.5);transform:translateY(-3px);box-shadow:0 12px 32px rgba(79,70,229,.15)}
+    .improvement-icon{font-size:28px;margin-bottom:12px}
+    .improvement-title{font-size:15px;font-weight:700;color:var(--text-head);margin-bottom:6px}
+    .improvement-desc{font-size:13px;color:var(--text-muted);line-height:1.6}
+
+    /* HEADER */
+    .doc-header{position:sticky;top:0;z-index:100;background:rgba(15,14,23,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between}
+    .doc-header-title{font-size:14px;font-weight:700;color:var(--text-head);display:flex;align-items:center;gap:10px}
+    .dot-sep{width:4px;height:4px;border-radius:50%;background:var(--accent)}
+    .doc-header-nav{display:flex;gap:6px}
+    .doc-header-nav a{font-size:12px;font-weight:600;color:var(--text-muted);text-decoration:none;padding:5px 12px;border-radius:8px;transition:all .2s}
+    .doc-header-nav a:hover{background:rgba(99,102,241,.15);color:#a5b4fc}
+
+    /* FOOTER */
+    .doc-footer{margin-top:80px;padding:40px 0;border-top:1px solid var(--border);text-align:center}
+    .doc-footer p{font-size:13px;color:var(--text-muted);margin-bottom:6px}
+
+    ::-webkit-scrollbar{width:6px;height:6px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:rgba(99,102,241,.4);border-radius:3px}
+    ::-webkit-scrollbar-thumb:hover{background:rgba(99,102,241,.7)}
+  </style>
+</head>
+<body>
+
+<!-- STICKY HEADER -->
+<header class="doc-header">
+  <div class="doc-header-title">
+    <span>⚛️</span>
+    <span>React Todo App</span>
+    <span class="dot-sep"></span>
+    <span style="color:var(--text-muted);font-weight:400">Project Documentation</span>
+  </div>
+  <nav class="doc-header-nav">
+    <a href="#overview">Overview</a>
+    <a href="#stack">Stack</a>
+    <a href="#structure">Structure</a>
+    <a href="#components">Components</a>
+    <a href="#commands">Commands</a>
+    <a href="#testing">Testing</a>
+  </nav>
+</header>
+
+<!-- ══════════ COVER PAGE ══════════ -->
+<div class="cover">
+  <div class="cover-grid"></div>
+  <div class="cover-badge">📄 Project Development Documentation</div>
+  <h1 class="cover-title">
+    <span class="gradient-text">Todo Application</span><br/>
+    <span style="color:var(--text-muted);font-weight:300;font-size:.55em;letter-spacing:-.01em">using React + Vite</span>
+  </h1>
+  <p class="cover-subtitle">A full-featured task management web application<br/>with authentication, CRUD, search, filter and dark mode</p>
+  <div class="cover-divider"></div>
+  <div class="cover-meta-grid">
+    <div class="cover-meta-card"><div class="meta-label">👤 Developer</div><div class="meta-value">React Developer</div></div>
+    <div class="cover-meta-card"><div class="meta-label">📦 Project Name</div><div class="meta-value">my-react-app</div></div>
+    <div class="cover-meta-card"><div class="meta-label">🔖 Version</div><div class="meta-value">v0.0.0 (Development)</div></div>
+    <div class="cover-meta-card"><div class="meta-label">📅 Date</div><div class="meta-value">August 5, 2026</div></div>
+    <div class="cover-meta-card"><div class="meta-label">🌿 Git Branch</div><div class="meta-value">master (local repo)</div></div>
+    <div class="cover-meta-card"><div class="meta-label">📂 Document Type</div><div class="meta-value">Internship / College Project</div></div>
+  </div>
+  <div class="cover-tech-pills">
+    <div class="tech-pill"><span class="dot" style="background:#61dafb"></span>React 19</div>
+    <div class="tech-pill"><span class="dot" style="background:#646cff"></span>Vite 8</div>
+    <div class="tech-pill"><span class="dot" style="background:#ff4154"></span>React Router v7</div>
+    <div class="tech-pill"><span class="dot" style="background:#f59e0b"></span>Context API</div>
+    <div class="tech-pill"><span class="dot" style="background:#06b6d4"></span>Local Storage</div>
+    <div class="tech-pill"><span class="dot" style="background:#34d399"></span>CSS3</div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc-section">
+  <div class="section-label">Navigation</div>
+  <h2 class="section-title">Table of Contents</h2>
+  <div class="toc-grid">
+    <a class="toc-item" href="#overview"><span class="toc-num">01</span> Project Overview</a>
+    <a class="toc-item" href="#stack"><span class="toc-num">02</span> Technology Stack</a>
+    <a class="toc-item" href="#structure"><span class="toc-num">03</span> Folder Structure</a>
+    <a class="toc-item" href="#components"><span class="toc-num">04</span> Component Documentation</a>
+    <a class="toc-item" href="#pages"><span class="toc-num">05</span> Page Components</a>
+    <a class="toc-item" href="#context"><span class="toc-num">06</span> Context &amp; State Management</a>
+    <a class="toc-item" href="#files"><span class="toc-num">07</span> Modified Files</a>
+    <a class="toc-item" href="#workflow"><span class="toc-num">08</span> Application Workflow</a>
+    <a class="toc-item" href="#commands"><span class="toc-num">09</span> Commands Reference</a>
+    <a class="toc-item" href="#styling"><span class="toc-num">10</span> Styling Documentation</a>
+    <a class="toc-item" href="#testing"><span class="toc-num">11</span> Testing Report</a>
+    <a class="toc-item" href="#future"><span class="toc-num">12</span> Future Improvements</a>
+  </div>
+</div>
+
+<!-- ══════════ 1. PROJECT OVERVIEW ══════════ -->
+<section class="section" id="overview">
+  <div class="section-label">Section 01</div>
+  <h2 class="section-title">Project Overview</h2>
+  <p class="section-subtitle">Purpose, objectives, and key features of the Todo Application</p>
+
+  <div class="card">
+    <h3 class="subsection-title" style="margin-top:0">Purpose &amp; Problem Statement</h3>
+    <p style="color:var(--text-muted);font-size:14px;line-height:1.8">
+      The <strong style="color:var(--text-head)">React Todo Application</strong> is a modern, full-featured task management web application
+      built as a front-end only project using <strong style="color:#61dafb">React 19</strong> and <strong style="color:#646cff">Vite 8</strong>.
+      It addresses the everyday problem of organizing and tracking personal tasks efficiently — without needing a backend server.
+      All data is persisted in the browser's <code>localStorage</code>, making the app fully offline-capable.
+    </p>
+    <p style="color:var(--text-muted);font-size:14px;line-height:1.8;margin-top:14px">
+      The application demonstrates real-world React patterns including component composition, custom hooks, Context API for global state,
+      protected routing, and responsive CSS design — making it ideal as an internship submission, college project, or GitHub portfolio piece.
+    </p>
+  </div>
+
+  <h3 class="subsection-title">Main Objectives</h3>
+  <div class="feature-grid">
+    <div class="feature-item"><span class="icon">🎯</span> Build a complete CRUD application using React</div>
+    <div class="feature-item"><span class="icon">🔐</span> Implement simple user authentication flow</div>
+    <div class="feature-item"><span class="icon">🗂️</span> Demonstrate React Context API for state management</div>
+    <div class="feature-item"><span class="icon">🔄</span> Use React Router DOM for client-side navigation</div>
+    <div class="feature-item"><span class="icon">💾</span> Persist data with localStorage — no backend needed</div>
+    <div class="feature-item"><span class="icon">📱</span> Create a fully responsive and accessible UI</div>
+    <div class="feature-item"><span class="icon">🌗</span> Implement dark / light mode theming</div>
+    <div class="feature-item"><span class="icon">⚡</span> Use Vite for fast development experience</div>
+  </div>
+
+  <h3 class="subsection-title">Implemented Features</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Feature</th><th>Description</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>🔐 User Login</td><td>Email-based login with localStorage session persistence</td><td><span class="badge badge-passed">✅ Done</span></td></tr>
+        <tr><td>2</td><td>➕ Create Todo</td><td>Add new tasks with title, description, priority, and category</td><td><span class="badge badge-passed">✅ Done</span></td></tr>
+        <tr><td>3</td><td>📋 View Todos</td><td>Display all todos as cards with full detail</td><td><span class="badge badge-passed">✅ Done</span></td></tr>
+        <tr><td>4</td><td>✏️ Update Todo</td><td>Edit existing todos via modal form</td><td><span class="badge badge-passed">✅ Done</span></td></tr>
+        <tr><td>5</td><td>🗑️ Delete Todo</td><td>Remove todos with confirmation modal</td><td><span class="badge badge-passed">✅ Done</span></td></tr>
+        <tr><td>6</td><td>🔍 Search Todo</td><td>Live search by title and description</td><td><span class="badge badge-passed">✅ Done</span></td></tr>
+        <tr><td>7</td><td>🏷️ Filter Todo</td><td>Filter by All / Pending / Completed status</td><td><span class="badge badge-passed">✅ Done</span></td></tr>
+        <tr><td>8</td><td>🌗 Dark / Light Mode</td><td>Toggle theme with CSS variables and localStorage</td><td><span class="badge badge-passed">✅ Done</span></td></tr>
+        <tr><td>9</td><td>📱 Responsive UI</td><td>Mobile-first design adapting to all screen sizes</td><td><span class="badge badge-passed">✅ Done</span></td></tr>
+        <tr><td>10</td><td>💾 Local Storage</td><td>All todo and auth data persisted in browser storage</td><td><span class="badge badge-passed">✅ Done</span></td></tr>
+        <tr><td>11</td><td>📊 Statistics Panel</td><td>Shows total, completed, pending, and high-priority counts</td><td><span class="badge badge-passed">✅ Done</span></td></tr>
+        <tr><td>12</td><td>🔔 Toast Notifications</td><td>Success/error feedback on every action</td><td><span class="badge badge-passed">✅ Done</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════ 2. TECHNOLOGY STACK ══════════ -->
+<section class="section" id="stack">
+  <div class="section-label">Section 02</div>
+  <h2 class="section-title">Technology Stack</h2>
+  <p class="section-subtitle">All technologies, libraries, and tools used in this project</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Technology</th><th>Version</th><th>Category</th><th>Usage</th></tr></thead>
+      <tbody>
+        <tr><td><strong>React</strong></td><td><span class="badge badge-loc">^19.2.8</span></td><td>Core UI Library</td><td>Building reusable UI components, managing state with hooks</td></tr>
+        <tr><td><strong>ReactDOM</strong></td><td><span class="badge badge-loc">^19.2.8</span></td><td>Rendering</td><td>Renders the React component tree into the browser DOM</td></tr>
+        <tr><td><strong>Vite</strong></td><td><span class="badge badge-loc">^8.2.0</span></td><td>Build Tool</td><td>Project scaffolding, instant HMR dev server, production bundling</td></tr>
+        <tr><td><strong>React Router DOM</strong></td><td><span class="badge badge-loc">^7.18.2</span></td><td>Routing</td><td>Client-side navigation between Login, Dashboard, and NotFound</td></tr>
+        <tr><td><strong>Context API</strong></td><td>Built-in</td><td>State Management</td><td>Global state for authentication and todo data</td></tr>
+        <tr><td><strong>JavaScript ES2022+</strong></td><td>ES Modules</td><td>Language</td><td>Application logic, helper utilities, custom hooks</td></tr>
+        <tr><td><strong>CSS3</strong></td><td>Vanilla CSS</td><td>Styling</td><td>Responsive layouts, dark/light themes, animations, CSS variables</td></tr>
+        <tr><td><strong>localStorage API</strong></td><td>Browser API</td><td>Data Persistence</td><td>Storing todos and user session across browser refreshes</td></tr>
+        <tr><td><strong>ESLint</strong></td><td><span class="badge badge-loc">^10.8.0</span></td><td>Code Quality</td><td>Static analysis and React best-practices enforcement</td></tr>
+        <tr><td><strong>Git</strong></td><td>Latest</td><td>Version Control</td><td>Tracking changes, branching, and collaborative development</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════ 3. FOLDER STRUCTURE ══════════ -->
+<section class="section" id="structure">
+  <div class="section-label">Section 03</div>
+  <h2 class="section-title">Project Folder Structure</h2>
+  <p class="section-subtitle">Complete directory tree of the <code>my-react-app</code> project</p>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span class="code-lang">Directory Tree</span>
+    </div>
+    <pre class="tree">
+<span class="dir">my-react-app/</span>                       ← Project root
+│
+├── <span class="html">index.html</span>                         ← Vite entry HTML file
+├── <span class="json">package.json</span>                       ← NPM dependencies &amp; scripts
+├── <span class="json">package-lock.json</span>                  ← Locked dependency versions
+├── <span class="js">vite.config.js</span>                     ← Vite build configuration
+├── <span class="js">eslint.config.js</span>                   ← ESLint rules configuration
+├── <span class="md">.gitignore</span>                         ← Git ignored files list
+├── <span class="md">README.md</span>                          ← Project readme
+│
+├── <span class="dir">public/</span>                            ← Static public assets
+├── <span class="dir">dist/</span>                              ← Production build output
+│
+└── <span class="dir">src/</span>                               ← Application source code
+    ├── <span class="jsx">App.jsx</span>                        ← Root component (providers + router)
+    ├── <span class="jsx">main.jsx</span>                       ← ReactDOM.createRoot entry point
+    ├── <span class="jsx">routes.jsx</span>                     ← Route config, ProtectedRoute, PublicRoute
+    │
+    ├── <span class="dir">components/</span>                    ← Reusable UI components
+    │   ├── <span class="jsx">Navbar.jsx</span>                 ← Top navigation bar
+    │   ├── <span class="jsx">TodoCard.jsx</span>               ← Individual todo card display
+    │   ├── <span class="jsx">TodoForm.jsx</span>               ← Add / edit todo form
+    │   ├── <span class="jsx">SearchBar.jsx</span>              ← Search &amp; sort toolbar
+    │   ├── <span class="jsx">ThemeToggle.jsx</span>            ← Dark / light mode button
+    │   ├── <span class="jsx">Stats.jsx</span>                  ← Statistics summary panel
+    │   └── <span class="jsx">Modal.jsx</span>                  ← Confirmation modal dialog
+    │
+    ├── <span class="dir">pages/</span>                         ← Route-level page components
+    │   ├── <span class="jsx">Login.jsx</span>                  ← Login page (public)
+    │   ├── <span class="jsx">Dashboard.jsx</span>              ← Main app dashboard (protected)
+    │   └── <span class="jsx">NotFound.jsx</span>               ← 404 error page
+    │
+    ├── <span class="dir">context/</span>                       ← React Context providers
+    │   ├── <span class="jsx">AuthContext.jsx</span>            ← Authentication state
+    │   └── <span class="jsx">TodoContext.jsx</span>            ← Todo CRUD state
+    │
+    ├── <span class="dir">hooks/</span>                         ← Custom React hooks
+    │   └── <span class="js">useLocalStorage.js</span>         ← localStorage sync hook
+    │
+    ├── <span class="dir">utils/</span>                         ← Pure utility functions
+    │   └── <span class="js">helpers.js</span>                 ← generateId, sort, filter, search
+    │
+    └── <span class="dir">styles/</span>                        ← CSS stylesheets
+        ├── <span class="css">global.css</span>                 ← CSS variables, reset, theme
+        ├── <span class="css">login.css</span>                  ← Login page styles
+        └── <span class="css">dashboard.css</span>              ← Dashboard layout styles</pre>
+  </div>
+  <div class="callout">
+    <strong>📌 Architecture Note:</strong> The project follows a <strong>feature-first</strong> folder organization.
+    Components are separated from pages, contexts are isolated, and utility functions have their own directory — making the codebase easy to navigate and scale.
+  </div>
+</section>
+
+<!-- ══════════ 4. COMPONENT DOCUMENTATION ══════════ -->
+<section class="section" id="components">
+  <div class="section-label">Section 04</div>
+  <h2 class="section-title">Component Documentation</h2>
+  <p class="section-subtitle">Detailed breakdown of every reusable component in <code>src/components/</code></p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Component</th><th>Location</th><th>File Name</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>🧭 Navbar</td><td><span class="badge badge-loc">src/components</span></td><td>Navbar.jsx</td><td>Top navigation bar with logout and theme toggle</td></tr>
+        <tr><td>2</td><td>📝 TodoCard</td><td><span class="badge badge-loc">src/components</span></td><td>TodoCard.jsx</td><td>Displays a single todo item with action buttons</td></tr>
+        <tr><td>3</td><td>📋 TodoForm</td><td><span class="badge badge-loc">src/components</span></td><td>TodoForm.jsx</td><td>Form for creating and editing todos</td></tr>
+        <tr><td>4</td><td>🔍 SearchBar</td><td><span class="badge badge-loc">src/components</span></td><td>SearchBar.jsx</td><td>Live search input and sort/filter controls</td></tr>
+        <tr><td>5</td><td>🌗 ThemeToggle</td><td><span class="badge badge-loc">src/components</span></td><td>ThemeToggle.jsx</td><td>Button to switch between dark and light themes</td></tr>
+        <tr><td>6</td><td>📊 Stats</td><td><span class="badge badge-loc">src/components</span></td><td>Stats.jsx</td><td>Summary panel showing todo statistics</td></tr>
+        <tr><td>7</td><td>💬 Modal</td><td><span class="badge badge-loc">src/components</span></td><td>Modal.jsx</td><td>Reusable confirmation dialog overlay</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="subsection-title">1. Navbar.jsx — Navigation Bar</h3>
+  <div class="card">
+    <div style="display:flex;gap:32px;flex-wrap:wrap">
+      <div><h4 class="mini-title" style="margin-top:0">📍 Path</h4><code>src/components/Navbar.jsx</code></div>
+      <div><h4 class="mini-title" style="margin-top:0">🔗 Uses</h4><code>useAuth</code>, <code>ThemeToggle</code></div>
+    </div>
+    <h4 class="mini-title">Main Responsibilities</h4>
+    <ul style="color:var(--text-muted);font-size:14px;padding-left:20px;line-height:2">
+      <li>Renders the application logo / brand name at the top of every dashboard page</li>
+      <li>Shows the currently logged-in user's email address</li>
+      <li>Contains the <strong style="color:#a5b4fc">Logout</strong> button that calls <code>auth.logout()</code> from AuthContext</li>
+      <li>Embeds the <code>&lt;ThemeToggle /&gt;</code> component for theme switching</li>
+      <li>Remains fixed at the top using sticky CSS positioning</li>
+    </ul>
+  </div>
+
+  <h3 class="subsection-title">2. TodoCard.jsx — Todo Item Card</h3>
+  <div class="card">
+    <div style="display:flex;gap:32px;flex-wrap:wrap">
+      <div><h4 class="mini-title" style="margin-top:0">📍 Path</h4><code>src/components/TodoCard.jsx</code></div>
+      <div><h4 class="mini-title" style="margin-top:0">🔗 Uses</h4><code>useTodos</code>, <code>Modal</code></div>
+    </div>
+    <h4 class="mini-title">Main Responsibilities</h4>
+    <ul style="color:var(--text-muted);font-size:14px;padding-left:20px;line-height:2">
+      <li>Displays a single todo's title, description, priority badge, category, and due date</li>
+      <li>Renders a <strong>status checkbox</strong> to toggle between Pending and Completed</li>
+      <li>Provides <strong>Edit</strong> and <strong>Delete</strong> action buttons</li>
+      <li>Opens a <code>&lt;Modal /&gt;</code> confirmation before deleting a todo</li>
+      <li>Applies conditional CSS classes based on priority (High / Medium / Low)</li>
+    </ul>
+  </div>
+
+  <h3 class="subsection-title">3. TodoForm.jsx — Create / Edit Form</h3>
+  <div class="card">
+    <div style="display:flex;gap:32px;flex-wrap:wrap">
+      <div><h4 class="mini-title" style="margin-top:0">📍 Path</h4><code>src/components/TodoForm.jsx</code></div>
+      <div><h4 class="mini-title" style="margin-top:0">🔗 Uses</h4><code>useTodos</code>, <code>useState</code></div>
+    </div>
+    <h4 class="mini-title">Main Responsibilities</h4>
+    <ul style="color:var(--text-muted);font-size:14px;padding-left:20px;line-height:2">
+      <li>Renders a controlled form: Title, Description, Priority, Category, Due Date</li>
+      <li>In <strong>create mode</strong>: calls <code>addTodo()</code> from TodoContext</li>
+      <li>In <strong>edit mode</strong>: pre-populates fields and calls <code>updateTodo()</code></li>
+      <li>Validates required fields before submission and shows error messages</li>
+      <li>Resets all form fields after a successful submission</li>
+    </ul>
+  </div>
+
+  <h3 class="subsection-title">4. SearchBar.jsx — Search &amp; Filter Toolbar</h3>
+  <div class="card">
+    <div style="display:flex;gap:32px;flex-wrap:wrap">
+      <div><h4 class="mini-title" style="margin-top:0">📍 Path</h4><code>src/components/SearchBar.jsx</code></div>
+      <div><h4 class="mini-title" style="margin-top:0">🔗 Uses</h4><code>useTodos</code></div>
+    </div>
+    <h4 class="mini-title">Main Responsibilities</h4>
+    <ul style="color:var(--text-muted);font-size:14px;padding-left:20px;line-height:2">
+      <li>Provides a live search input that updates <code>searchQuery</code> in TodoContext</li>
+      <li>Contains filter buttons (All / Pending / Completed) that update <code>activeFilter</code></li>
+      <li>Contains a sort dropdown (Latest / Oldest / Priority) that updates <code>sortBy</code></li>
+      <li>All state changes feed into the <code>processedTodos</code> computed array via <code>useMemo</code></li>
+    </ul>
+  </div>
+
+  <h3 class="subsection-title">5. ThemeToggle.jsx — Dark / Light Switch</h3>
+  <div class="card">
+    <div style="display:flex;gap:32px;flex-wrap:wrap">
+      <div><h4 class="mini-title" style="margin-top:0">📍 Path</h4><code>src/components/ThemeToggle.jsx</code></div>
+      <div><h4 class="mini-title" style="margin-top:0">🔗 Uses</h4><code>useState</code>, <code>useEffect</code>, <code>localStorage</code></div>
+    </div>
+    <h4 class="mini-title">Main Responsibilities</h4>
+    <ul style="color:var(--text-muted);font-size:14px;padding-left:20px;line-height:2">
+      <li>Toggles a <code>data-theme</code> attribute on <code>&lt;html&gt;</code> between <code>dark</code> and <code>light</code></li>
+      <li>Reads the saved theme preference from <code>localStorage</code> on initial load</li>
+      <li>Displays a sun 🌞 or moon 🌙 icon depending on the active theme</li>
+      <li>Persists user theme preference across browser sessions using localStorage</li>
+    </ul>
+  </div>
+
+  <h3 class="subsection-title">6. Stats.jsx — Statistics Panel</h3>
+  <div class="card">
+    <div style="display:flex;gap:32px;flex-wrap:wrap">
+      <div><h4 class="mini-title" style="margin-top:0">📍 Path</h4><code>src/components/Stats.jsx</code></div>
+      <div><h4 class="mini-title" style="margin-top:0">🔗 Uses</h4><code>useTodos</code></div>
+    </div>
+    <h4 class="mini-title">Main Responsibilities</h4>
+    <ul style="color:var(--text-muted);font-size:14px;padding-left:20px;line-height:2">
+      <li>Reads the computed <code>stats</code> object from TodoContext (derived via <code>useMemo</code>)</li>
+      <li>Displays four metric cards: Total, Completed, Pending, and High Priority count</li>
+      <li>Updates automatically whenever the todos array changes — no manual refresh needed</li>
+    </ul>
+  </div>
+
+  <h3 class="subsection-title">7. Modal.jsx — Confirmation Dialog</h3>
+  <div class="card">
+    <div style="display:flex;gap:32px;flex-wrap:wrap">
+      <div><h4 class="mini-title" style="margin-top:0">📍 Path</h4><code>src/components/Modal.jsx</code></div>
+      <div><h4 class="mini-title" style="margin-top:0">🔗 Props</h4><code>isOpen</code>, <code>onClose</code>, <code>onConfirm</code>, <code>title</code>, <code>message</code></div>
+    </div>
+    <h4 class="mini-title">Main Responsibilities</h4>
+    <ul style="color:var(--text-muted);font-size:14px;padding-left:20px;line-height:2">
+      <li>Renders a backdrop overlay with an animated centered dialog box</li>
+      <li>Accepts <code>onConfirm</code> and <code>onClose</code> callbacks as props — fully controlled</li>
+      <li>Used by <code>TodoCard</code> to ask user confirmation before deleting a todo</li>
+      <li>Fully reusable — can be used anywhere in the application for any action</li>
+      <li>Closes on backdrop click to improve user experience</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════ 5. PAGE COMPONENTS ══════════ -->
+<section class="section" id="pages">
+  <div class="section-label">Section 05</div>
+  <h2 class="section-title">Page Components</h2>
+  <p class="section-subtitle">Route-level page components located in <code>src/pages/</code></p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Page</th><th>Location</th><th>File Name</th><th>Route</th><th>Access</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>🔐 Login Page</td><td><span class="badge badge-loc">src/pages</span></td><td>Login.jsx</td><td><code>/</code></td><td><span class="badge badge-modified">Public</span></td></tr>
+        <tr><td>2</td><td>📋 Dashboard</td><td><span class="badge badge-loc">src/pages</span></td><td>Dashboard.jsx</td><td><code>/dashboard</code></td><td><span class="badge badge-created">Protected</span></td></tr>
+        <tr><td>3</td><td>❌ Not Found</td><td><span class="badge badge-loc">src/pages</span></td><td>NotFound.jsx</td><td><code>*</code></td><td><span class="badge badge-modified">Public</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="subsection-title">Login.jsx — User Authentication Page</h3>
+  <div class="card">
+    <p style="color:var(--text-muted);font-size:14px;line-height:1.8">
+      The Login page is the application's <strong style="color:#a5b4fc">entry point</strong>. It renders a styled login form
+      with an email and password input. On submit, the <code>login(email)</code> function from <code>AuthContext</code> is called,
+      which stores a session object in <code>localStorage</code>. On success, React Router automatically redirects to <code>/dashboard</code>
+      via the <code>PublicRoute</code> guard. If a user is already authenticated, they are immediately redirected away from this page.
+    </p>
+    <div class="callout" style="margin-top:16px">
+      <strong>User Flow:</strong> Open App → Login Form → Enter Email + Password → Click Login → Redirect to Dashboard
+    </div>
+  </div>
+
+  <h3 class="subsection-title">Dashboard.jsx — Main Application Screen</h3>
+  <div class="card">
+    <p style="color:var(--text-muted);font-size:14px;line-height:1.8">
+      The Dashboard is the <strong style="color:#a5b4fc">protected main screen</strong> where all todo management happens.
+      It renders: <code>&lt;Navbar /&gt;</code>, <code>&lt;Stats /&gt;</code>, <code>&lt;SearchBar /&gt;</code>,
+      <code>&lt;TodoForm /&gt;</code>, and the list of <code>&lt;TodoCard /&gt;</code> components.
+      It consumes <code>processedTodos</code> from <code>TodoContext</code> to render the filtered, searched, and sorted list.
+      The <code>ProtectedRoute</code> wrapper redirects unauthenticated users to <code>/</code>.
+    </p>
+    <div class="callout success" style="margin-top:16px">
+      <strong>Key Behavior:</strong> The page re-renders reactively when any todo is added, updated, deleted, or
+      when search/filter/sort controls change — powered by React Context and <code>useMemo</code>.
+    </div>
+  </div>
+
+  <h3 class="subsection-title">NotFound.jsx — 404 Error Page</h3>
+  <div class="card">
+    <p style="color:var(--text-muted);font-size:14px;line-height:1.8">
+      Rendered for any URL that does not match <code>/</code> or <code>/dashboard</code>.
+      It displays a friendly 404 message and a link back to the home page, improving user experience
+      and preventing blank screens on invalid routes.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 6. CONTEXT & STATE MANAGEMENT ══════════ -->
+<section class="section" id="context">
+  <div class="section-label">Section 06</div>
+  <h2 class="section-title">Context &amp; State Management</h2>
+  <p class="section-subtitle">Global state architecture using React's built-in Context API</p>
+
+  <div class="callout">
+    <strong>Architecture:</strong> Two separate contexts — <code>AuthContext</code> for authentication and
+    <code>TodoContext</code> for todo data — are both wrapped at the root level in <code>App.jsx</code>
+    to make their values available throughout the entire component tree without prop drilling.
+  </div>
+
+  <h3 class="subsection-title">AuthContext.jsx — Authentication State</h3>
+  <div class="card">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+      <span class="badge badge-loc">src/context/AuthContext.jsx</span>
+      <span class="badge badge-created">Created</span>
+    </div>
+    <h4 class="mini-title" style="margin-top:0">Purpose &amp; Responsibilities</h4>
+    <ul style="color:var(--text-muted);font-size:14px;padding-left:20px;line-height:2.1">
+      <li>Creates and exports <code>AuthContext</code> using <code>React.createContext()</code></li>
+      <li>Wraps children in <code>AuthProvider</code> exposing <code>user</code>, <code>isAuthenticated</code>, <code>login()</code>, <code>logout()</code></li>
+      <li>Uses <code>useLocalStorage</code> hook to persist the session under key <code>'authUser'</code></li>
+      <li>The <code>login(email)</code> function creates a user object: <code>&#123; email, loggedInAt &#125;</code></li>
+      <li>The <code>logout()</code> function clears the user to <code>null</code>, destroying the session</li>
+      <li>Exports <code>useAuth()</code> custom hook for easy consumption in any component</li>
+      <li>Uses <code>useMemo</code> to prevent unnecessary re-renders of the context value</li>
+    </ul>
+    <h4 class="mini-title">Exported Values</h4>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Export</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>user</code></td><td>Object | null</td><td>Current user data or null if not logged in</td></tr>
+          <tr><td><code>isAuthenticated</code></td><td>Boolean</td><td>Derived from <code>!!user</code></td></tr>
+          <tr><td><code>login(email)</code></td><td>Function</td><td>Saves user session to localStorage</td></tr>
+          <tr><td><code>logout()</code></td><td>Function</td><td>Clears user session from localStorage</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3 class="subsection-title">TodoContext.jsx — Todo State Management</h3>
+  <div class="card">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+      <span class="badge badge-loc">src/context/TodoContext.jsx</span>
+      <span class="badge badge-created">Created</span>
+    </div>
+    <h4 class="mini-title" style="margin-top:0">Purpose &amp; Responsibilities</h4>
+    <ul style="color:var(--text-muted);font-size:14px;padding-left:20px;line-height:2.1">
+      <li>Creates and exports <code>TodoContext</code> and the <code>TodoProvider</code> component</li>
+      <li>Persists all todos in <code>localStorage</code> under key <code>'todos'</code> via <code>useLocalStorage</code></li>
+      <li>Manages <code>searchQuery</code>, <code>activeFilter</code>, and <code>sortBy</code> state variables</li>
+      <li>Implements full CRUD: <code>addTodo()</code>, <code>updateTodo()</code>, <code>deleteTodo()</code>, <code>toggleStatus()</code></li>
+      <li>Computes <code>processedTodos</code> via <code>useMemo</code> — applies search → filter → sort in sequence</li>
+      <li>Computes <code>stats</code> object (total, completed, pending, highPriority) via <code>useMemo</code></li>
+      <li>Manages toast notification state with auto-dismiss after 3 seconds</li>
+      <li>All mutation functions wrapped in <code>useCallback</code> for stable references and performance</li>
+    </ul>
+    <h4 class="mini-title">Key Exported Values</h4>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Export</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>todos</code></td><td>Array</td><td>Raw todos array from localStorage</td></tr>
+          <tr><td><code>processedTodos</code></td><td>Array</td><td>Filtered, searched &amp; sorted todos for display</td></tr>
+          <tr><td><code>stats</code></td><td>Object</td><td>&#123; total, completed, pending, highPriority &#125;</td></tr>
+          <tr><td><code>addTodo(data)</code></td><td>Function</td><td>Creates a new todo with auto-generated ID</td></tr>
+          <tr><td><code>updateTodo(id, data)</code></td><td>Function</td><td>Merges updated fields into existing todo</td></tr>
+          <tr><td><code>deleteTodo(id)</code></td><td>Function</td><td>Removes todo by ID</td></tr>
+          <tr><td><code>toggleStatus(id)</code></td><td>Function</td><td>Flips Pending ↔ Completed</td></tr>
+          <tr><td><code>toast / showToast()</code></td><td>Object / Function</td><td>Toast notification state and trigger</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 7. MODIFIED FILES ══════════ -->
+<section class="section" id="files">
+  <div class="section-label">Section 07</div>
+  <h2 class="section-title">Modified Files Documentation</h2>
+  <p class="section-subtitle">Every file created or modified during development with full rationale</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>File Name</th><th>Location</th><th>Type</th><th>Reason for Change</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>App.jsx</td><td><span class="badge badge-loc">src/</span></td><td><span class="badge badge-modified">Modified</span></td><td>Added BrowserRouter, AuthProvider, TodoProvider, and useRoutes routing</td></tr>
+        <tr><td>2</td><td>main.jsx</td><td><span class="badge badge-loc">src/</span></td><td><span class="badge badge-modified">Modified</span></td><td>Bootstraps React 19 app with createRoot into index.html #root element</td></tr>
+        <tr><td>3</td><td>routes.jsx</td><td><span class="badge badge-loc">src/</span></td><td><span class="badge badge-created">Created</span></td><td>Centralized route config with ProtectedRoute and PublicRoute guards</td></tr>
+        <tr><td>4</td><td>Navbar.jsx</td><td><span class="badge badge-loc">src/components</span></td><td><span class="badge badge-created">Created</span></td><td>Top nav with user info, logout button, and embedded ThemeToggle</td></tr>
+        <tr><td>5</td><td>TodoCard.jsx</td><td><span class="badge badge-loc">src/components</span></td><td><span class="badge badge-created">Created</span></td><td>Renders individual todo with edit / delete / toggle-status actions</td></tr>
+        <tr><td>6</td><td>TodoForm.jsx</td><td><span class="badge badge-loc">src/components</span></td><td><span class="badge badge-created">Created</span></td><td>Controlled form for create and update operations with validation</td></tr>
+        <tr><td>7</td><td>SearchBar.jsx</td><td><span class="badge badge-loc">src/components</span></td><td><span class="badge badge-created">Created</span></td><td>Search input, filter buttons, and sort dropdown wired to TodoContext</td></tr>
+        <tr><td>8</td><td>ThemeToggle.jsx</td><td><span class="badge badge-loc">src/components</span></td><td><span class="badge badge-created">Created</span></td><td>Toggles data-theme attribute on html element and persists preference</td></tr>
+        <tr><td>9</td><td>Stats.jsx</td><td><span class="badge badge-loc">src/components</span></td><td><span class="badge badge-created">Created</span></td><td>Displays computed statistics (total, completed, pending, high) from context</td></tr>
+        <tr><td>10</td><td>Modal.jsx</td><td><span class="badge badge-loc">src/components</span></td><td><span class="badge badge-created">Created</span></td><td>Reusable confirmation dialog for destructive actions like delete</td></tr>
+        <tr><td>11</td><td>Login.jsx</td><td><span class="badge badge-loc">src/pages</span></td><td><span class="badge badge-created">Created</span></td><td>Login form page wired to AuthContext login function</td></tr>
+        <tr><td>12</td><td>Dashboard.jsx</td><td><span class="badge badge-loc">src/pages</span></td><td><span class="badge badge-created">Created</span></td><td>Main protected page composing all todo management components</td></tr>
+        <tr><td>13</td><td>NotFound.jsx</td><td><span class="badge badge-loc">src/pages</span></td><td><span class="badge badge-created">Created</span></td><td>404 fallback page rendered for all unmatched routes</td></tr>
+        <tr><td>14</td><td>AuthContext.jsx</td><td><span class="badge badge-loc">src/context</span></td><td><span class="badge badge-created">Created</span></td><td>Manages authentication state with localStorage persistence via useLocalStorage</td></tr>
+        <tr><td>15</td><td>TodoContext.jsx</td><td><span class="badge badge-loc">src/context</span></td><td><span class="badge badge-created">Created</span></td><td>Manages all todo CRUD, search, filter, sort, stats, and toast state</td></tr>
+        <tr><td>16</td><td>useLocalStorage.js</td><td><span class="badge badge-loc">src/hooks</span></td><td><span class="badge badge-created">Created</span></td><td>Custom hook syncing React state with localStorage automatically</td></tr>
+        <tr><td>17</td><td>helpers.js</td><td><span class="badge badge-loc">src/utils</span></td><td><span class="badge badge-created">Created</span></td><td>Pure functions: generateId, sampleTodos, sortTodos, filterTodos, searchTodos</td></tr>
+        <tr><td>18</td><td>global.css</td><td><span class="badge badge-loc">src/styles</span></td><td><span class="badge badge-created">Created</span></td><td>CSS custom properties, normalize/reset, dark/light theme tokens, typography</td></tr>
+        <tr><td>19</td><td>login.css</td><td><span class="badge badge-loc">src/styles</span></td><td><span class="badge badge-created">Created</span></td><td>Login page layout, form styling, background animation, responsive styles</td></tr>
+        <tr><td>20</td><td>dashboard.css</td><td><span class="badge badge-loc">src/styles</span></td><td><span class="badge badge-created">Created</span></td><td>Dashboard grid, todo card styles, modal, toast, responsive breakpoints</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="subsection-title">Key File: App.jsx — Root Component</h3>
+  <div class="card">
+    <p style="color:var(--text-muted);font-size:14px;line-height:1.8">
+      <strong style="color:#a5b4fc">Original State:</strong> Vite scaffolds a default App.jsx with a counter demo and Vite/React logos.<br/>
+      <strong style="color:#a5b4fc">Changes Made:</strong> Completely replaced with the application root. Added <code>AuthProvider</code> and
+      <code>TodoProvider</code> context wrappers, and <code>BrowserRouter</code> with a nested <code>AppRoutes</code> component
+      using <code>useRoutes(routeConfig)</code>.<br/>
+      <strong style="color:#a5b4fc">Why:</strong> The app needs global providers at the top level so any component in the tree can access
+      auth and todo state without prop drilling.
+    </p>
+  </div>
+
+  <h3 class="subsection-title">Key File: useLocalStorage.js — Custom Hook</h3>
+  <div class="card">
+    <p style="color:var(--text-muted);font-size:14px;line-height:1.8">
+      A custom React hook that works like <code>useState</code> but automatically reads the initial value from
+      <code>localStorage</code> and writes every state update back. This single hook powers both
+      <code>AuthContext</code> (persisting the user session) and <code>TodoContext</code> (persisting all todos),
+      keeping both contexts clean and focused on business logic rather than storage mechanics.
+    </p>
+  </div>
+
+  <h3 class="subsection-title">Key File: helpers.js — Utility Functions</h3>
+  <div class="card">
+    <ul style="color:var(--text-muted);font-size:14px;padding-left:20px;line-height:2.1">
+      <li><code>generateId()</code> — Creates a unique ID for new todos using <code>Date.now()</code> + random suffix</li>
+      <li><code>sampleTodos</code> — Initial demo todos loaded on first run when localStorage is empty</li>
+      <li><code>sortTodos(arr, sortBy)</code> — Sorts by date (latest/oldest) or by priority level</li>
+      <li><code>filterTodos(arr, filter)</code> — Filters by 'all', 'pending', or 'completed' status</li>
+      <li><code>searchTodos(arr, query)</code> — Case-insensitive search across title and description fields</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════ 8. APPLICATION WORKFLOW ══════════ -->
+<section class="section" id="workflow">
+  <div class="section-label">Section 08</div>
+  <h2 class="section-title">Application Workflow</h2>
+  <p class="section-subtitle">Complete user journey from application launch to logout</p>
+
+  <div class="workflow">
+    <div class="workflow-step">
+      <div class="workflow-step-num">Step 01</div>
+      <div class="workflow-step-title">🚀 User Opens Application</div>
+      <p>Browser loads <code>index.html</code>. Vite injects <code>main.jsx</code> which calls <code>ReactDOM.createRoot()</code>
+      and renders <code>&lt;App /&gt;</code>. Context providers initialize and the router renders the <code>/</code> route.</p>
+    </div>
+    <div class="workflow-step">
+      <div class="workflow-step-num">Step 02</div>
+      <div class="workflow-step-title">🔐 Login Authentication</div>
+      <p>The <code>PublicRoute</code> checks <code>isAuthenticated</code> from AuthContext. If no session exists,
+      <code>Login.jsx</code> is rendered. User enters email and password; on submit, <code>login(email)</code>
+      saves the session to <code>localStorage</code>.</p>
+    </div>
+    <div class="workflow-step">
+      <div class="workflow-step-num">Step 03</div>
+      <div class="workflow-step-title">📋 Redirect to Dashboard</div>
+      <p>After login, <code>isAuthenticated</code> becomes <code>true</code>. The <code>PublicRoute</code> detects this
+      and issues <code>&lt;Navigate to="/dashboard"&gt;</code>. Dashboard renders with existing todos loaded from localStorage.</p>
+    </div>
+    <div class="workflow-step">
+      <div class="workflow-step-num">Step 04</div>
+      <div class="workflow-step-title">➕ Add New Todo</div>
+      <p>User fills <code>TodoForm</code> with title, description, priority, category, and due date.
+      On submit, <code>addTodo(data)</code> prepends a new todo with auto-generated ID and timestamp.
+      A success toast appears and the card renders immediately.</p>
+    </div>
+    <div class="workflow-step">
+      <div class="workflow-step-num">Step 05</div>
+      <div class="workflow-step-title">👁️ View Todos</div>
+      <p>Dashboard maps over <code>processedTodos</code> to render one <code>TodoCard</code> per todo,
+      displaying title, description, priority badge, category, due date, and status.</p>
+    </div>
+    <div class="workflow-step">
+      <div class="workflow-step-num">Step 06</div>
+      <div class="workflow-step-title">🔍 Search &amp; Filter Todos</div>
+      <p>User types in <code>SearchBar</code> to update <code>searchQuery</code>. Clicking filter buttons
+      updates <code>activeFilter</code>. Changing sort dropdown updates <code>sortBy</code>.
+      <code>processedTodos</code> is recomputed by <code>useMemo</code> and the list updates instantly.</p>
+    </div>
+    <div class="workflow-step">
+      <div class="workflow-step-num">Step 07</div>
+      <div class="workflow-step-title">✏️ Update Todo</div>
+      <p>User clicks Edit on a <code>TodoCard</code>. <code>TodoForm</code> enters edit mode with all fields
+      pre-populated. On submit, <code>updateTodo(id, data)</code> merges the changes and shows an update toast.</p>
+    </div>
+    <div class="workflow-step">
+      <div class="workflow-step-num">Step 08</div>
+      <div class="workflow-step-title">🗑️ Delete Todo</div>
+      <p>User clicks Delete on a <code>TodoCard</code>. A <code>Modal</code> confirmation dialog appears.
+      If confirmed, <code>deleteTodo(id)</code> filters out the todo. If cancelled, nothing changes.
+      A danger toast confirms the deletion.</p>
+    </div>
+    <div class="workflow-step">
+      <div class="workflow-step-num">Step 09</div>
+      <div class="workflow-step-title">🌗 Change Theme</div>
+      <p>User clicks <code>ThemeToggle</code> in the Navbar. The component toggles <code>data-theme</code>
+      on <code>&lt;html&gt;</code> between <code>dark</code> and <code>light</code>. CSS custom properties cascade
+      and the entire UI re-themes instantly. Preference saved to localStorage.</p>
+    </div>
+    <div class="workflow-step">
+      <div class="workflow-step-num">Step 10</div>
+      <div class="workflow-step-title">🚪 Logout</div>
+      <p>User clicks Logout in the Navbar. <code>logout()</code> sets <code>user</code> to <code>null</code>
+      and clears <code>localStorage</code>. <code>isAuthenticated</code> becomes <code>false</code>.
+      <code>ProtectedRoute</code> detects this and redirects back to the Login page.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 9. COMMANDS REFERENCE ══════════ -->
+<section class="section" id="commands">
+  <div class="section-label">Section 09</div>
+  <h2 class="section-title">Commands Reference</h2>
+  <p class="section-subtitle">All terminal commands used during development with purpose and context</p>
+
+  <h3 class="subsection-title">⚙️ NPM / Project Commands</h3>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">🏗️</span><span class="cmd-title">Create React Project with Vite</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>npm create vite@latest my-react-app -- --template react</pre></div>
+      <p>Scaffolds a new React + Vite project in a folder named <code>my-react-app</code> using the official React template. Creates <code>package.json</code>, <code>vite.config.js</code>, <code>index.html</code>, and starter <code>src/</code> files.</p>
+      <div class="cmd-when">⏱ When used: Day 1 — Project initialization</div>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">📦</span><span class="cmd-title">Install Dependencies</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>npm install</pre></div>
+      <p>Reads <code>package.json</code> and installs all dependencies into <code>node_modules/</code>. Run after project creation or after cloning from Git.</p>
+      <div class="cmd-when">⏱ When used: After project creation or cloning from Git</div>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">🌐</span><span class="cmd-title">Install React Router DOM</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>npm install react-router-dom</pre></div>
+      <p>Adds <code>react-router-dom</code> (v7.18.2) providing <code>BrowserRouter</code>, <code>useRoutes</code>, <code>Navigate</code>, and <code>useNavigate</code> for client-side routing between pages.</p>
+      <div class="cmd-when">⏱ When used: Before implementing multi-page navigation</div>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">⚡</span><span class="cmd-title">Start Development Server</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>npm run dev</pre></div>
+      <p>Starts the Vite dev server with Hot Module Replacement (HMR) at <code>http://localhost:5173</code>. Any saved file change reflects in the browser instantly without full reload.</p>
+      <div class="cmd-when">⏱ When used: Every development session</div>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">🔍</span><span class="cmd-title">Lint Code</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>npm run lint</pre></div>
+      <p>Runs ESLint with configured rules to check for code quality issues, unused variables, React hooks violations, and other potential bugs in the codebase.</p>
+      <div class="cmd-when">⏱ When used: Before committing code to Git</div>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">🏭</span><span class="cmd-title">Build for Production</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>npm run build</pre></div>
+      <p>Bundles the application for production into the <code>dist/</code> folder with tree-shaking, minification, and code splitting for optimal performance.</p>
+      <div class="cmd-when">⏱ When used: Before deployment to hosting</div>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">👁️</span><span class="cmd-title">Preview Production Build</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>npm run preview</pre></div>
+      <p>Serves the production build locally on port <code>4173</code> to verify the build works correctly before deploying to a live hosting service.</p>
+      <div class="cmd-when">⏱ When used: After <code>npm run build</code> to test the output</div>
+    </div>
+  </div>
+
+  <h3 class="subsection-title">🌿 Git Version Control Commands</h3>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">🚀</span><span class="cmd-title">Initialize Repository</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>git init</pre></div>
+      <p>Creates a new empty Git repository. Generates the hidden <code>.git/</code> directory that tracks all version history.</p>
+      <div class="cmd-when">⏱ When used: Once, at the start of the project</div>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">📋</span><span class="cmd-title">Check File Status</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>git status</pre></div>
+      <p>Shows which files have been modified, staged, or are untracked. Used constantly before committing to understand what changes exist.</p>
+      <div class="cmd-when">⏱ When used: Before every <code>git add</code></div>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">📌</span><span class="cmd-title">Stage All Changes</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>git add .</pre></div>
+      <p>Stages all modified and new files in the current directory for the next commit. The <code>.</code> selects all files recursively.</p>
+      <div class="cmd-when">⏱ When used: After completing a feature or bug fix</div>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">💾</span><span class="cmd-title">Commit Changes</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>git commit -m "feat: add todo CRUD with context API"</pre></div>
+      <p>Creates a permanent snapshot of staged changes with a descriptive message. Use conventional commit format: <code>feat:</code>, <code>fix:</code>, <code>refactor:</code>, <code>style:</code>, <code>docs:</code>.</p>
+      <div class="cmd-when">⏱ When used: After staging files with <code>git add</code></div>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">🌿</span><span class="cmd-title">Create Feature Branch</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>git switch -c feature/theme-toggle</pre></div>
+      <p>Creates and immediately switches to a new branch. Use branches to develop features independently from the main codebase.</p>
+      <div class="cmd-when">⏱ When used: Before starting a new feature or fix</div>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">🔀</span><span class="cmd-title">Merge Branch</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>git switch master
+git merge feature/theme-toggle</pre></div>
+      <p>Switches back to <code>master</code> and merges the completed feature branch. Resolve any merge conflicts before finalizing.</p>
+      <div class="cmd-when">⏱ When used: After completing and testing a feature branch</div>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">☁️</span><span class="cmd-title">Connect Remote Repository</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>git remote add origin https://github.com/username/todo-app.git</pre></div>
+      <p>Links the local repository to a remote GitHub repository. Only needed once after creating the GitHub repo.</p>
+      <div class="cmd-when">⏱ When used: Once, after creating the GitHub repository</div>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">⬆️</span><span class="cmd-title">Push to Remote</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>git push -u origin master</pre></div>
+      <p>Uploads local commits to the remote GitHub repository. The <code>-u</code> flag sets upstream so future <code>git push</code> commands don't need the branch name.</p>
+      <div class="cmd-when">⏱ When used: After commits to share or backup code</div>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">⬇️</span><span class="cmd-title">Pull Latest Changes</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>git pull</pre></div>
+      <p>Downloads and merges the latest changes from the remote repository (equivalent to <code>git fetch</code> + <code>git merge</code>).</p>
+      <div class="cmd-when">⏱ When used: At the start of each work session</div>
+    </div>
+  </div>
+
+  <div class="cmd-card">
+    <div class="cmd-header"><span class="cmd-icon">📜</span><span class="cmd-title">View Commit History</span></div>
+    <div class="cmd-body">
+      <div class="code-wrap" style="margin:0 0 12px"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">bash</span></div><pre>git log --oneline --graph --decorate</pre></div>
+      <p>Shows a compact, visual history of all commits with branch indicators. Useful for reviewing the project timeline.</p>
+      <div class="cmd-when">⏱ When used: For reviewing project history</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 10. STYLING DOCUMENTATION ══════════ -->
+<section class="section" id="styling">
+  <div class="section-label">Section 10</div>
+  <h2 class="section-title">Styling Documentation</h2>
+  <p class="section-subtitle">CSS architecture, theme system, and responsive design implementation</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>CSS File</th><th>Location</th><th>Size</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><strong>global.css</strong></td><td><span class="badge badge-loc">src/styles</span></td><td>~10.8 KB</td><td>CSS custom properties, reset, dark/light themes, typography, shared utilities</td></tr>
+        <tr><td><strong>login.css</strong></td><td><span class="badge badge-loc">src/styles</span></td><td>~4.5 KB</td><td>Login page layout, form styling, background animation, responsive adjustments</td></tr>
+        <tr><td><strong>dashboard.css</strong></td><td><span class="badge badge-loc">src/styles</span></td><td>~16 KB</td><td>Dashboard grid, Navbar, TodoCard, SearchBar, Stats, Modal, toast notifications</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="subsection-title">CSS Custom Properties — Theme System</h3>
+  <div class="card">
+    <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px">
+      The dark/light theme system uses <strong>CSS Custom Properties (variables)</strong>.
+      The <code>[data-theme="dark"]</code> and <code>[data-theme="light"]</code> selectors on <code>&lt;html&gt;</code>
+      override a set of base variables. Every component uses these variables — no hardcoded colors anywhere.
+    </p>
+    <div class="code-wrap">
+      <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-lang">CSS — global.css (excerpt)</span></div>
+      <pre>:root {
+  --bg-primary:     #ffffff;
+  --bg-secondary:   #f8fafc;
+  --text-primary:   #0f172a;
+  --text-secondary: #64748b;
+  --accent-color:   #4f46e5;
+  --border-color:   #e2e8f0;
+  --card-shadow:    0 4px 16px rgba(0,0,0,0.06);
+}
+
+[data-theme="dark"] {
+  --bg-primary:     #0f172a;
+  --bg-secondary:   #1e293b;
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --accent-color:   #818cf8;
+  --border-color:   #334155;
+  --card-shadow:    0 4px 16px rgba(0,0,0,0.4);
+}</pre>
+    </div>
+  </div>
+
+  <h3 class="subsection-title">Responsive Design Breakpoints</h3>
+  <div class="card">
+    <div class="table-wrap" style="margin-top:0">
+      <table>
+        <thead><tr><th>Breakpoint</th><th>Target Device</th><th>Layout Change</th></tr></thead>
+        <tbody>
+          <tr><td><code>≤ 480px</code></td><td>Small Mobile</td><td>Single column, stacked form fields, full-width buttons</td></tr>
+          <tr><td><code>≤ 768px</code></td><td>Tablet / Mobile</td><td>Single column todo grid, simplified navbar</td></tr>
+          <tr><td><code>≤ 1024px</code></td><td>Small Laptop</td><td>2-column todo grid, compact stats panel</td></tr>
+          <tr><td><code>≥ 1025px</code></td><td>Desktop</td><td>Full 3-column todo grid, expanded layout</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3 class="subsection-title">Dark Mode Implementation</h3>
+  <div class="card">
+    <ul style="color:var(--text-muted);font-size:14px;padding-left:20px;line-height:2.1">
+      <li><code>ThemeToggle.jsx</code> reads initial theme from <code>localStorage.getItem('theme')</code></li>
+      <li>On toggle, calls <code>document.documentElement.setAttribute('data-theme', newTheme)</code></li>
+      <li>CSS variables under <code>[data-theme="dark"]</code> override light defaults instantly</li>
+      <li>No JavaScript color computation — pure CSS variable cascading ensures flicker-free switching</li>
+      <li>Preference saved via <code>localStorage.setItem('theme', newTheme)</code></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════ 11. TESTING REPORT ══════════ -->
+<section class="section" id="testing">
+  <div class="section-label">Section 11</div>
+  <h2 class="section-title">Testing Report</h2>
+  <p class="section-subtitle">Manual functional testing performed on all features of the application</p>
+
+  <div class="callout warning">
+    <strong>Testing Type:</strong> Manual functional testing was performed directly in the browser.
+    Automated unit testing (Vitest, React Testing Library) is planned as a future improvement.
+  </div>
+
+  <div class="table-wrap" style="margin-top:24px">
+    <table>
+      <thead><tr><th>#</th><th>Feature</th><th>Test Case</th><th>Steps Performed</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>🔐 Login — Valid</td><td>Enter valid email &amp; password</td><td>Fill form → Click Login → Redirected to Dashboard</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>2</td><td>🔐 Login — Invalid</td><td>Leave email empty, click Login</td><td>Empty email → Click Login → Validation error shown</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>3</td><td>🛡️ Protected Route</td><td>Access /dashboard without login</td><td>Navigate to /dashboard directly → Redirected to /</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>4</td><td>➕ Add Todo</td><td>Create a new task with all fields</td><td>Fill TodoForm → Submit → Card appears, toast shown</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>5</td><td>✏️ Update Todo</td><td>Edit an existing task</td><td>Click Edit → Modify fields → Submit → Card updates</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>6</td><td>🗑️ Delete — Confirm</td><td>Delete a task with confirmation</td><td>Click Delete → Modal → Confirm → Card removed</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>7</td><td>🗑️ Delete — Cancel</td><td>Cancel delete in modal</td><td>Click Delete → Modal → Click Cancel → Card stays</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>8</td><td>✔️ Toggle Status</td><td>Mark a todo as completed</td><td>Click checkbox → Status changes to Completed</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>9</td><td>🔍 Search</td><td>Search by keyword in title</td><td>Type keyword → Matching todos shown, others hidden</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>10</td><td>🏷️ Filter — Pending</td><td>Show only pending tasks</td><td>Click Pending filter → Only pending todos displayed</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>11</td><td>🏷️ Filter — Completed</td><td>Show only completed tasks</td><td>Click Completed filter → Only completed todos shown</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>12</td><td>🔄 Sort</td><td>Sort by latest / oldest / priority</td><td>Change sort dropdown → Todos reorder correctly</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>13</td><td>🌗 Dark Mode</td><td>Toggle to dark theme</td><td>Click ThemeToggle → UI switches to dark mode instantly</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>14</td><td>🌞 Light Mode</td><td>Toggle back to light theme</td><td>Click ThemeToggle again → UI switches to light mode</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>15</td><td>💾 Data Persistence</td><td>Refresh page, data remains</td><td>Add todos → Refresh browser → Todos still visible</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>16</td><td>📊 Stats Panel</td><td>Stats update on changes</td><td>Add / complete todo → Stats counters update instantly</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>17</td><td>📱 Mobile View</td><td>Test on 375px screen width</td><td>Resize browser → Layout stacks correctly, no overflow</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>18</td><td>❌ 404 Page</td><td>Navigate to unknown route</td><td>Visit /unknown-page → NotFound page displayed</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+        <tr><td>19</td><td>🚪 Logout</td><td>Logout and verify session cleared</td><td>Click Logout → Redirected to Login → Dashboard inaccessible</td><td><span class="badge badge-passed">✅ Passed</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout success" style="margin-top:20px">
+    <strong>Overall Result: 19 / 19 Test Cases Passed ✅</strong> — All features are functioning as expected.
+  </div>
+</section>
+
+<!-- ══════════ 12. FUTURE IMPROVEMENTS ══════════ -->
+<section class="section" id="future">
+  <div class="section-label">Section 12</div>
+  <h2 class="section-title">Future Improvements</h2>
+  <p class="section-subtitle">Planned enhancements to evolve this project beyond the current scope</p>
+
+  <div class="improvements-grid">
+    <div class="improvement-card">
+      <div class="improvement-icon">🔗</div>
+      <div class="improvement-title">Backend API Integration</div>
+      <div class="improvement-desc">Replace localStorage with a REST API (Node.js + Express or Django) for real data persistence and multi-device support.</div>
+    </div>
+    <div class="improvement-card">
+      <div class="improvement-icon">🗄️</div>
+      <div class="improvement-title">Database Support</div>
+      <div class="improvement-desc">Integrate MongoDB or PostgreSQL to store todos and users on a server, enabling data across sessions and devices.</div>
+    </div>
+    <div class="improvement-card">
+      <div class="improvement-icon">🔑</div>
+      <div class="improvement-title">JWT Authentication</div>
+      <div class="improvement-desc">Replace simple localStorage auth with proper JWT token-based authentication using refresh and access tokens.</div>
+    </div>
+    <div class="improvement-card">
+      <div class="improvement-icon">📝</div>
+      <div class="improvement-title">User Registration</div>
+      <div class="improvement-desc">Add a sign-up page allowing new users to create accounts with email verification and password hashing.</div>
+    </div>
+    <div class="improvement-card">
+      <div class="improvement-icon">☁️</div>
+      <div class="improvement-title">Cloud Deployment</div>
+      <div class="improvement-desc">Deploy to Vercel or Netlify for the frontend and Railway or Render for the backend API for public access.</div>
+    </div>
+    <div class="improvement-card">
+      <div class="improvement-icon">🖱️</div>
+      <div class="improvement-title">Drag &amp; Drop Reordering</div>
+      <div class="improvement-desc">Add drag-and-drop reordering of todo cards using <code>react-beautiful-dnd</code> or the HTML5 Drag API.</div>
+    </div>
+    <div class="improvement-card">
+      <div class="improvement-icon">🧪</div>
+      <div class="improvement-title">Automated Testing</div>
+      <div class="improvement-desc">Add unit tests with Vitest and component tests with React Testing Library for robust quality assurance.</div>
+    </div>
+    <div class="improvement-card">
+      <div class="improvement-icon">🔔</div>
+      <div class="improvement-title">Push Notifications</div>
+      <div class="improvement-desc">Send browser push notifications for due-date reminders using the Web Notifications API or Firebase.</div>
+    </div>
+    <div class="improvement-card">
+      <div class="improvement-icon">📱</div>
+      <div class="improvement-title">PWA Support</div>
+      <div class="improvement-desc">Convert the application into a Progressive Web App for offline usage and installation on mobile home screens.</div>
+    </div>
+    <div class="improvement-card">
+      <div class="improvement-icon">🌍</div>
+      <div class="improvement-title">i18n Localization</div>
+      <div class="improvement-desc">Add multi-language support using <code>react-i18next</code> to make the application accessible internationally.</div>
+    </div>
+    <div class="improvement-card">
+      <div class="improvement-icon">📊</div>
+      <div class="improvement-title">Analytics Dashboard</div>
+      <div class="improvement-desc">Visual charts using Chart.js for productivity analytics — completed tasks over time, priority distribution.</div>
+    </div>
+    <div class="improvement-card">
+      <div class="improvement-icon">📂</div>
+      <div class="improvement-title">Custom Categories</div>
+      <div class="improvement-desc">Allow users to create and manage custom categories and tags for better todo organization and filtering.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<div class="doc-footer">
+  <p style="font-size:15px;color:var(--text-head);font-weight:600;margin-bottom:16px">⚛️ React Todo Application — Project Documentation</p>
+  <p>Built with <strong>React 19</strong> · <strong>Vite 8</strong> · <strong>React Router v7</strong> · <strong>Context API</strong></p>
+  <p style="margin-top:8px">Document Date: August 5, 2026 · Version 0.0.0 · Branch: master</p>
+  <p style="margin-top:16px;font-size:12px;color:#475569">This document was generated as part of the project submission. All rights reserved.</p>
+</div>
+
+</div><!-- end page-wrapper -->
+</body>
+</html>
