@@ -8,37 +8,16 @@ const Stats = () => {
   const { stats } = useTodos();
 
   const statCards = [
-    {
-      label: 'Total Todos',
-      value: stats.total,
-      icon: '📋',
-      className: 'stat-card-1',
-    },
-    {
-      label: 'Completed',
-      value: stats.completed,
-      icon: '✅',
-      className: 'stat-card-2',
-    },
-    {
-      label: 'Pending',
-      value: stats.pending,
-      icon: '⏳',
-      className: 'stat-card-3',
-    },
-    {
-      label: 'High Priority',
-      value: stats.highPriority,
-      icon: '🔥',
-      className: 'stat-card-4',
-    },
+    { label: 'Total', value: stats.total, className: 'stat-card-1' },
+    { label: 'Completed', value: stats.completed, className: 'stat-card-2' },
+    { label: 'Pending', value: stats.pending, className: 'stat-card-3' },
+    { label: 'High Priority', value: stats.highPriority, className: 'stat-card-4' },
   ];
 
   return (
     <div className="stats-grid" id="stats-section">
       {statCards.map((card) => (
         <div key={card.label} className={`stat-card ${card.className}`}>
-          <div className="stat-card-icon">{card.icon}</div>
           <div className="stat-card-value">{card.value}</div>
           <div className="stat-card-label">{card.label}</div>
         </div>

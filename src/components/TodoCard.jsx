@@ -54,21 +54,19 @@ const TodoCard = ({ todo, onEdit, onDelete, onToggleStatus }) => {
       {/* Description */}
       <p className="todo-card-desc">{todo.description}</p>
 
-      {/* Badges */}
       <div className="todo-card-meta">
         <span className={`todo-badge ${badgePriorityClass}`}>
-          {todo.priority === 'High' ? '🔴' : todo.priority === 'Medium' ? '🟡' : '🟢'}{' '}
           {todo.priority}
         </span>
         <span className={`todo-badge ${badgeStatusClass}`}>
-          {todo.status === 'Completed' ? '✅' : '⏳'} {todo.status}
+          {todo.status}
         </span>
       </div>
 
       {/* Footer with dates */}
       <div className="todo-card-footer">
-        <span>📅 Due: {formatDate(todo.dueDate)}</span>
-        <span>🕐 Created: {formatDate(todo.createdDate)}</span>
+        <span>Due {formatDate(todo.dueDate)}</span>
+        <span>Created {formatDate(todo.createdDate)}</span>
       </div>
     </div>
   );

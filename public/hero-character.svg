@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 480" fill="none" role="img" aria-label="Person working on a laptop">
+  <defs>
+    <linearGradient id="skin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5c4a1"/>
+      <stop offset="100%" stop-color="#e8a87c"/>
+    </linearGradient>
+    <linearGradient id="shirt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2dd4bf"/>
+      <stop offset="100%" stop-color="#007a78"/>
+    </linearGradient>
+    <linearGradient id="laptop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="100%" stop-color="#0891b2"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <!-- Ground shadow -->
+    <ellipse cx="210" cy="452" rx="120" ry="18" fill="#000" opacity="0.12"/>
+
+    <!-- Legs -->
+    <path d="M165 330 L145 430 L175 430 L190 330 Z" fill="#334155"/>
+    <path d="M255 330 L275 430 L245 430 L230 330 Z" fill="#334155"/>
+
+    <!-- Chair -->
+    <rect x="130" y="300" width="160" height="18" rx="8" fill="#475569"/>
+    <rect x="150" y="318" width="12" height="90" rx="4" fill="#64748b"/>
+    <rect x="258" y="318" width="12" height="90" rx="4" fill="#64748b"/>
+
+    <!-- Torso -->
+    <path d="M150 190 Q210 170 270 190 L285 310 Q210 330 135 310 Z" fill="url(#shirt)"/>
+
+    <!-- Arms -->
+    <path d="M150 210 Q110 240 120 290 Q130 300 145 285 Q155 250 160 230 Z" fill="url(#shirt)"/>
+    <path d="M270 210 Q310 240 300 290 Q290 300 275 285 Q265 250 260 230 Z" fill="url(#shirt)"/>
+
+    <!-- Hands -->
+    <circle cx="128" cy="292" r="14" fill="url(#skin)"/>
+    <circle cx="292" cy="292" r="14" fill="url(#skin)"/>
+
+    <!-- Laptop base -->
+    <path d="M95 295 L325 295 L335 320 L85 320 Z" fill="url(#laptop)"/>
+    <rect x="105" y="268" width="210" height="28" rx="4" fill="url(#laptop)"/>
+
+    <!-- Laptop screen -->
+    <path d="M105 268 L115 170 L305 170 L315 268 Z" fill="url(#laptop)"/>
+    <path d="M125 185 L125 252 L295 252 L295 185 Z" fill="url(#screen)" opacity="0.95"/>
+    <rect x="140" y="200" width="60" height="8" rx="4" fill="#fff" opacity="0.7"/>
+    <rect x="140" y="218" width="100" height="6" rx="3" fill="#fff" opacity="0.5"/>
+    <rect x="140" y="232" width="80" height="6" rx="3" fill="#fff" opacity="0.5"/>
+
+    <!-- Head -->
+    <circle cx="210" cy="130" r="52" fill="url(#skin)"/>
+
+    <!-- Hair -->
+    <path d="M158 118 Q165 70 210 62 Q265 68 268 118 Q250 88 210 84 Q170 88 158 118 Z" fill="#1e293b"/>
+
+    <!-- Face details -->
+    <circle cx="192" cy="132" r="5" fill="#1e293b"/>
+    <circle cx="228" cy="132" r="5" fill="#1e293b"/>
+    <path d="M198 152 Q210 162 222 152" stroke="#c97b5a" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+    <!-- Glasses -->
+    <circle cx="192" cy="132" r="14" stroke="#007a78" stroke-width="3" fill="none"/>
+    <circle cx="228" cy="132" r="14" stroke="#007a78" stroke-width="3" fill="none"/>
+    <line x1="206" y1="132" x2="214" y2="132" stroke="#007a78" stroke-width="3"/>
+  </g>
+</svg>

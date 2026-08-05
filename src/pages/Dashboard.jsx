@@ -68,57 +68,50 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="app-container page-enter" id="dashboard-page">
-      {/* Navbar */}
+    <div className="app-layout page-enter" id="dashboard-page">
       <Navbar />
 
-      {/* Main content */}
-      <main className="dashboard container">
-        {/* Page header */}
-        <div className="dashboard-header">
-          <h1>📋 My Todos</h1>
-          <p>Manage your tasks efficiently and stay productive</p>
-        </div>
+      <div className="app-main">
+        <main className="dashboard">
+          <div className="dashboard-header">
+            <h1>My Todos</h1>
+          </div>
 
-        {/* Statistics */}
-        <Stats />
+          <Stats />
 
-        {/* Controls: Search, Filters, Sort, Add */}
-        <SearchBar onAddClick={handleAddClick} />
+          <SearchBar onAddClick={handleAddClick} />
 
-        {/* Todo Cards Grid */}
-        <div className="todo-grid" id="todo-grid">
-          {processedTodos.length > 0 ? (
-            processedTodos.map((todo) => (
-              <TodoCard
-                key={todo.id}
-                todo={todo}
-                onEdit={handleEditClick}
-                onDelete={handleDeleteClick}
-                onToggleStatus={toggleStatus}
-              />
-            ))
-          ) : (
-            /* Empty State */
-            <div className="empty-state" id="empty-state">
-              <div className="empty-state-icon">📝</div>
-              <h3>No todos found</h3>
-              <p>
-                {processedTodos.length === 0
-                  ? 'Create your first todo to get started, or adjust your filters.'
-                  : 'Try adjusting your search or filter criteria.'}
-              </p>
-              <button
-                className="btn btn-primary"
-                onClick={handleAddClick}
-                style={{ marginTop: '16px' }}
-              >
-                ➕ Add Your First Todo
-              </button>
-            </div>
-          )}
-        </div>
-      </main>
+          <div className="todo-list" id="todo-grid">
+            {processedTodos.length > 0 ? (
+              processedTodos.map((todo) => (
+                <TodoCard
+                  key={todo.id}
+                  todo={todo}
+                  onEdit={handleEditClick}
+                  onDelete={handleDeleteClick}
+                  onToggleStatus={toggleStatus}
+                />
+              ))
+            ) : (
+              <div className="empty-state" id="empty-state">
+                <div className="empty-state-icon" aria-hidden="true">
+                  <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                    <rect x="12" y="20" width="40" height="32" rx="6" fill="#FDF0ED" stroke="#EAEAEA"/>
+                    <path d="M20 32h24M20 40h16" stroke="#E44332" strokeWidth="2" strokeLinecap="round" opacity="0.4"/>
+                  </svg>
+                </div>
+                <h3>No todos found</h3>
+                <p>
+                  Create your first todo to get started, or adjust your filters.
+                </p>
+                <button className="btn btn-primary" onClick={handleAddClick}>
+                  Add task
+                </button>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
 
       {/* Add/Edit Todo Modal */}
       <Modal
@@ -127,7 +120,7 @@ const Dashboard = () => {
           setShowFormModal(false);
           setEditingTodo(null);
         }}
-        title={editingTodo ? '✏️ Edit Todo' : '➕ New Todo'}
+        title={editingTodo ? 'Edit task' : 'New task'}
       >
         <TodoForm
           editingTodo={editingTodo}

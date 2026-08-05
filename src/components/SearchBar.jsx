@@ -78,8 +78,7 @@ const SearchBar = ({ onAddClick }) => {
 
         {/* Add Todo button */}
         <button className="add-todo-btn" onClick={onAddClick} id="add-todo-btn">
-          <span>+</span>
-          Add Todo
+          Add task
         </button>
       </div>
     </div>

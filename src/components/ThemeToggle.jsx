@@ -6,7 +6,7 @@ import useLocalStorage from '../hooks/useLocalStorage';
  * Applies theme via data-theme attribute on <html>.
  */
 const ThemeToggle = ({ className = '' }) => {
-  const [theme, setTheme] = useLocalStorage('theme', 'dark');
+  const [theme, setTheme] = useLocalStorage('theme', 'light');
 
   // Apply theme to document root
   document.documentElement.setAttribute('data-theme', theme);
