@@ -4,14 +4,32 @@ import { useAuth } from '../context/AuthContext';
 import { isValidEmail } from '../utils/helpers';
 import '../styles/login.css';
 
+const REGISTERED_USERS_KEY = 'registeredUsers';
+
+const getRegisteredUsers = () => {
+  try {
+    const stored = window.localStorage.getItem(REGISTERED_USERS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveRegisteredUser = (user) => {
+  const users = getRegisteredUsers();
+  window.localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify([...users, user]));
+};
+
 /**
  * Login Page — Clean pre-authentication portal.
- * Todoist-inspired split layout: form (left) + decorative panel (right).
- * No post-login data, mock OAuth, or internal app content is shown here.
+ * Todoist-inspired split layout with toggleable Log in / Sign up modes.
  */
 const Login = () => {
+  const [mode, setMode] = useState('login');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -19,7 +37,23 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const validate = () => {
+  const isSignUp = mode === 'signup';
+
+  const clearFieldError = (field) => {
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    if (field === 'name') setName(value);
+    if (field === 'email') setEmail(value);
+    if (field === 'password') setPassword(value);
+    if (field === 'confirmPassword') setConfirmPassword(value);
+    clearFieldError(field);
+  };
+
+  const validateLogin = () => {
     const newErrors = {};
 
     if (!email.trim()) {
@@ -38,9 +72,42 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const validateSignUp = () => {
+    const newErrors = {};
+
+    if (!name.trim()) {
+      newErrors.name = 'Name is required';
+    } else if (name.trim().length < 2) {
+      newErrors.name = 'Name must be at least 2 characters';
+    }
+
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!isValidEmail(email)) {
+      newErrors.email = 'Please enter a valid email address';
+    } else if (getRegisteredUsers().some((u) => u.email.toLowerCase() === email.trim().toLowerCase())) {
+      newErrors.email = 'An account with this email already exists';
+    }
+
+    if (!password.trim()) {
+      newErrors.password = 'Password is required';
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    if (!confirmPassword.trim()) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validateLogin()) return;
 
     setIsLoading(true);
 
@@ -51,12 +118,33 @@ const Login = () => {
     }, 600);
   };
 
-  const handleInputChange = (field, value) => {
-    if (field === 'email') setEmail(value);
-    if (field === 'password') setPassword(value);
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
-    }
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    if (!validateSignUp()) return;
+
+    setIsLoading(true);
+
+    setTimeout(() => {
+      saveRegisteredUser({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        createdAt: new Date().toISOString(),
+      });
+      login(email.trim());
+      setIsLoading(false);
+      navigate('/dashboard');
+    }, 600);
+  };
+
+  const handleSubmit = isSignUp ? handleRegister : handleLogin;
+
+  const toggleMode = (e) => {
+    e.preventDefault();
+    setMode(isSignUp ? 'login' : 'signup');
+    setErrors({});
+    setName('');
+    setConfirmPassword('');
   };
 
   const onForgotPassword = (e) => {
@@ -66,7 +154,6 @@ const Login = () => {
 
   return (
     <div className="login-page" id="login-page">
-      {/* Left — Login form */}
       <div className="login-form-side">
         <div className="login-form-inner">
           <div className="login-brand">
@@ -81,17 +168,43 @@ const Login = () => {
           </div>
 
           <div className="login-header">
-            <h1 className="login-title">Welcome back!</h1>
+            <h1 className="login-title">
+              {isSignUp ? 'Create account' : 'Welcome back!'}
+            </h1>
           </div>
 
-          <form className="login-form" onSubmit={handleLogin} id="login-form" noValidate>
+          <form
+            className="login-form"
+            onSubmit={handleSubmit}
+            id={isSignUp ? 'signup-form' : 'login-form'}
+            noValidate
+          >
+            {isSignUp && (
+              <div className="lf-input-group">
+                <label htmlFor="signup-name" className="lf-label">Name</label>
+                <input
+                  type="text"
+                  id="signup-name"
+                  className={`lf-input${errors.name ? ' lf-input--error' : ''}`}
+                  placeholder="Enter your name..."
+                  value={name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  autoComplete="name"
+                  aria-describedby={errors.name ? 'name-error' : undefined}
+                />
+                {errors.name && (
+                  <span className="lf-error" id="name-error" role="alert">{errors.name}</span>
+                )}
+              </div>
+            )}
+
             <div className="lf-input-group">
               <label htmlFor="login-email" className="lf-label">Email</label>
               <input
                 type="text"
                 id="login-email"
                 className={`lf-input${errors.email ? ' lf-input--error' : ''}`}
-                placeholder="Enter your email..."
+                placeholder={isSignUp ? 'Enter your personal or work email...' : 'Enter your email...'}
                 value={email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 autoComplete="email"
@@ -111,7 +224,7 @@ const Login = () => {
                 placeholder="Enter your password..."
                 value={password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
-                autoComplete="current-password"
+                autoComplete={isSignUp ? 'new-password' : 'current-password'}
                 aria-describedby={errors.password ? 'password-error' : undefined}
               />
               {errors.password && (
@@ -119,50 +232,85 @@ const Login = () => {
               )}
             </div>
 
-            <div className="lf-control-row">
-              <label className="lf-checkbox-label" htmlFor="remember-me">
+            {isSignUp && (
+              <div className="lf-input-group">
+                <label htmlFor="signup-confirm-password" className="lf-label">Confirm password</label>
                 <input
-                  type="checkbox"
-                  id="remember-me"
-                  className="lf-checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
+                  type="password"
+                  id="signup-confirm-password"
+                  className={`lf-input${errors.confirmPassword ? ' lf-input--error' : ''}`}
+                  placeholder="Confirm your password..."
+                  value={confirmPassword}
+                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                  autoComplete="new-password"
+                  aria-describedby={errors.confirmPassword ? 'confirm-password-error' : undefined}
                 />
-                <span className="lf-checkbox-custom" aria-hidden="true" />
-                Remember me
-              </label>
+                {errors.confirmPassword && (
+                  <span className="lf-error" id="confirm-password-error" role="alert">
+                    {errors.confirmPassword}
+                  </span>
+                )}
+              </div>
+            )}
 
-              <a href="#forgot" className="lf-forgot-link" onClick={onForgotPassword}>
-                Forgot your password?
-              </a>
-            </div>
+            {!isSignUp && (
+              <div className="lf-control-row">
+                <label className="lf-checkbox-label" htmlFor="remember-me">
+                  <input
+                    type="checkbox"
+                    id="remember-me"
+                    className="lf-checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
+                  <span className="lf-checkbox-custom" aria-hidden="true" />
+                  Remember me
+                </label>
+
+                <a href="#forgot" className="lf-forgot-link" onClick={onForgotPassword}>
+                  Forgot your password?
+                </a>
+              </div>
+            )}
 
             <button
               type="submit"
               className="lf-submit-btn"
               disabled={isLoading}
-              id="login-submit-btn"
+              id={isSignUp ? 'signup-submit-btn' : 'login-submit-btn'}
               aria-busy={isLoading}
             >
               {isLoading ? (
                 <>
                   <span className="lf-spinner" aria-hidden="true" />
-                  Signing in…
+                  {isSignUp ? 'Creating account…' : 'Signing in…'}
                 </>
               ) : (
-                'Log in'
+                isSignUp ? 'Sign up' : 'Log in'
               )}
             </button>
           </form>
 
           <p className="lf-signup-prompt">
-            Don&apos;t have an account?{' '}
-            <a href="#signup" className="lf-signup-link">Sign up</a>
+            {isSignUp ? (
+              <>
+                Already have an account?{' '}
+                <button type="button" className="lf-signup-link" onClick={toggleMode}>
+                  Log in
+                </button>
+              </>
+            ) : (
+              <>
+                Don&apos;t have an account?{' '}
+                <button type="button" className="lf-signup-link" onClick={toggleMode}>
+                  Sign up
+                </button>
+              </>
+            )}
           </p>
         </div>
       </div>
 
-      {/* Right — Decorative panel (no app data) */}
       <div className="login-visual-side" aria-hidden="true">
         <div className="login-visual-content">
           <div className="login-visual-card">
@@ -180,6 +328,12 @@ const Login = () => {
             </svg>
           </div>
         </div>
+        {isSignUp && (
+          <div className="login-visual-caption">
+            <h2>Take TaskFlow with you</h2>
+            <p>Stay organized wherever you are and keep every task in sync.</p>
+          </div>
+        )}
       </div>
     </div>
   );

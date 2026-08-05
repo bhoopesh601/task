@@ -249,6 +249,12 @@
   color: var(--login-brand);
   font-weight: 600;
   text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 .lf-signup-link:hover {
@@ -260,11 +266,32 @@
   flex: 1;
   background: var(--login-visual-bg);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 48px;
   position: relative;
   overflow: hidden;
+}
+
+.login-visual-caption {
+  margin-top: 48px;
+  text-align: center;
+  max-width: 320px;
+}
+
+.login-visual-caption h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--login-text);
+  margin: 0 0 8px;
+}
+
+.login-visual-caption p {
+  font-size: 0.875rem;
+  color: var(--login-subtext);
+  margin: 0;
+  line-height: 1.5;
 }
 
 .login-visual-content {
