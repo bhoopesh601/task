@@ -13,14 +13,77 @@
   --login-subtext:     #666666;
   --login-placeholder: #999999;
   --login-border:      #EAEAEA;
+  --login-input-bg:    #FFFFFF;
+  --login-input-hover-border: #D5D5D5;
+  --login-checkbox-bg: #FFFFFF;
+  --login-checkbox-border: #D1D5DB;
+  --login-card-bg:     #FFFFFF;
+  --login-card-line:   #F0F0F0;
+  --login-card-shadow: rgba(0, 0, 0, 0.04);
+  --login-badge-shadow: rgba(228, 67, 50, 0.12);
+  --login-toggle-bg:   rgba(0, 0, 0, 0.04);
+  --login-toggle-hover: rgba(0, 0, 0, 0.08);
+  --login-toggle-color: #666666;
   --login-radius:      8px;
   --login-transition:  0.15s ease;
+}
+
+.login-page--dark {
+  --login-form-bg:     #121212;
+  --login-visual-bg:   linear-gradient(135deg, #121212 0%, #1A1A1A 50%, #1E1E1E 100%);
+  --login-text:        #F5F5F5;
+  --login-subtext:     #B0B0B0;
+  --login-placeholder: #757575;
+  --login-border:      #333333;
+  --login-brand-light: rgba(228, 67, 50, 0.18);
+  --login-input-bg:    #1E1E1E;
+  --login-input-hover-border: #444444;
+  --login-checkbox-bg: #1E1E1E;
+  --login-checkbox-border: #555555;
+  --login-card-bg:     #1E1E1E;
+  --login-card-line:   #333333;
+  --login-card-shadow: rgba(0, 0, 0, 0.35);
+  --login-badge-shadow: rgba(228, 67, 50, 0.25);
+  --login-toggle-bg:   rgba(255, 255, 255, 0.08);
+  --login-toggle-hover: rgba(255, 255, 255, 0.14);
+  --login-toggle-color: #E0E0E0;
 }
 
 .login-page {
   display: flex;
   min-height: 100vh;
+  position: relative;
   font-family: var(--font-primary, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.login-theme-toggle {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--login-border);
+  border-radius: 50%;
+  background: var(--login-toggle-bg);
+  color: var(--login-toggle-color);
+  cursor: pointer;
+  transition: background var(--login-transition), border-color var(--login-transition), color var(--login-transition), transform var(--login-transition);
+}
+
+.login-theme-toggle:hover {
+  background: var(--login-toggle-hover);
+  transform: scale(1.05);
+}
+
+.login-theme-toggle:focus-visible {
+  outline: 2px solid var(--login-brand);
+  outline-offset: 2px;
 }
 
 /* ── Left form panel ── */
@@ -31,6 +94,7 @@
   justify-content: center;
   background: var(--login-form-bg);
   padding: 48px 32px;
+  transition: background-color 0.25s ease;
 }
 
 .login-form-inner {
@@ -93,12 +157,12 @@
   padding: 11px 14px;
   font-size: 0.9375rem;
   font-family: inherit;
-  background: #FFFFFF;
+  background: var(--login-input-bg);
   border: 1px solid var(--login-border);
   border-radius: var(--login-radius);
   color: var(--login-text);
   outline: none;
-  transition: border-color var(--login-transition), box-shadow var(--login-transition);
+  transition: border-color var(--login-transition), box-shadow var(--login-transition), background-color 0.25s ease, color 0.25s ease;
 }
 
 .lf-input::placeholder {
@@ -106,7 +170,7 @@
 }
 
 .lf-input:hover {
-  border-color: #D5D5D5;
+  border-color: var(--login-input-hover-border);
 }
 
 .lf-input:focus {
@@ -154,9 +218,9 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  border: 1.5px solid #D1D5DB;
+  border: 1.5px solid var(--login-checkbox-border);
   border-radius: 4px;
-  background: #FFFFFF;
+  background: var(--login-checkbox-bg);
   position: relative;
   transition: all var(--login-transition);
 }
@@ -272,6 +336,7 @@
   padding: 48px;
   position: relative;
   overflow: hidden;
+  transition: background 0.25s ease;
 }
 
 .login-visual-caption {
@@ -302,13 +367,14 @@
 }
 
 .login-visual-card {
-  background: #FFFFFF;
+  background: var(--login-card-bg);
   border: 1px solid var(--login-border);
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px var(--login-card-shadow);
   position: absolute;
   width: 280px;
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .login-visual-card:first-child {
@@ -325,9 +391,10 @@
 
 .visual-card-line {
   height: 10px;
-  background: #F0F0F0;
+  background: var(--login-card-line);
   border-radius: 5px;
   margin-bottom: 12px;
+  transition: background-color 0.25s ease;
 }
 
 .visual-card-line--long  { width: 85%; }
@@ -341,13 +408,14 @@
   transform: translateX(-50%);
   width: 56px;
   height: 56px;
-  background: #FFFFFF;
+  background: var(--login-card-bg);
   border: 1px solid var(--login-border);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(228, 67, 50, 0.12);
+  box-shadow: 0 4px 16px var(--login-badge-shadow);
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 /* ── Responsive ── */
