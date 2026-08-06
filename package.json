@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "vite",
     "server": "node server/index.js",
+    "start": "node server/index.js",
     "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
     "db:push": "prisma db push",
-    "build": "vite build",
+    "build": "vite build && prisma generate",
     "lint": "eslint .",
     "preview": "vite preview"
   },

@@ -50,7 +50,7 @@ router.post('/', async (req, res) => {
   try {
     const parseResult = todoCreateSchema.safeParse(req.body);
     if (!parseResult.success) {
-      const errorMsg = parseResult.error.errors[0]?.message || 'Validation failed';
+      const errorMsg = parseResult.error.issues?.[0]?.message || parseResult.error.message || 'Validation failed';
       return res.status(400).json({ error: errorMsg });
     }
 
@@ -92,7 +92,7 @@ router.put('/:id', async (req, res) => {
 
     const parseResult = todoUpdateSchema.safeParse(req.body);
     if (!parseResult.success) {
-      const errorMsg = parseResult.error.errors[0]?.message || 'Validation failed';
+      const errorMsg = parseResult.error.issues?.[0]?.message || parseResult.error.message || 'Validation failed';
       return res.status(400).json({ error: errorMsg });
     }
 

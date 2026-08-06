@@ -26,7 +26,7 @@ router.post('/register', async (req, res) => {
   try {
     const parseResult = registerSchema.safeParse(req.body);
     if (!parseResult.success) {
-      const errorMsg = parseResult.error.errors[0]?.message || 'Validation failed';
+      const errorMsg = parseResult.error.issues?.[0]?.message || parseResult.error.message || 'Validation failed';
       return res.status(400).json({ error: errorMsg });
     }
 
@@ -84,7 +84,7 @@ router.post('/login', async (req, res) => {
   try {
     const parseResult = loginSchema.safeParse(req.body);
     if (!parseResult.success) {
-      const errorMsg = parseResult.error.errors[0]?.message || 'Validation failed';
+      const errorMsg = parseResult.error.issues?.[0]?.message || parseResult.error.message || 'Validation failed';
       return res.status(400).json({ error: errorMsg });
     }
 
