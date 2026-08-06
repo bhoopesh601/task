@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { sortTodos, filterTodos, searchTodos } from '../utils/helpers';
+import { apiFetch } from '../utils/api';
 
 const TodoContext = createContext(null);
 
@@ -30,7 +31,7 @@ export const TodoProvider = ({ children }) => {
       return;
     }
     try {
-      const res = await fetch('/api/todos');
+      const res = await apiFetch('/api/todos');
       if (res.ok) {
         const data = await res.json();
         setTodos(data);
@@ -50,9 +51,8 @@ export const TodoProvider = ({ children }) => {
   // CRUD Operations
   const addTodo = useCallback(async (todoData) => {
     try {
-      const res = await fetch('/api/todos', {
+      const res = await apiFetch('/api/todos', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(todoData),
       });
 
@@ -71,9 +71,8 @@ export const TodoProvider = ({ children }) => {
 
   const updateTodo = useCallback(async (id, updatedData) => {
     try {
-      const res = await fetch(`/api/todos/${id}`, {
+      const res = await apiFetch(`/api/todos/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedData),
       });
 
@@ -92,7 +91,7 @@ export const TodoProvider = ({ children }) => {
 
   const deleteTodo = useCallback(async (id) => {
     try {
-      const res = await fetch(`/api/todos/${id}`, {
+      const res = await apiFetch(`/api/todos/${id}`, {
         method: 'DELETE',
       });
 
@@ -115,9 +114,8 @@ export const TodoProvider = ({ children }) => {
     const newStatus = target.status === 'Pending' ? 'Completed' : 'Pending';
 
     try {
-      const res = await fetch(`/api/todos/${id}`, {
+      const res = await apiFetch(`/api/todos/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
 

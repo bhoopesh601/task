@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { apiFetch } from '../utils/api';
 
 const AuthContext = createContext(null);
 
@@ -25,9 +26,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch('/api/auth/me', {
-          headers: { 'Content-Type': 'application/json' },
-        });
+        const res = await apiFetch('/api/auth/me');
         if (res.ok) {
           const data = await res.json();
           setUser(data.user);
@@ -49,9 +48,8 @@ export const AuthProvider = ({ children }) => {
 
   // Login: strictly authenticate against /api/auth/login
   const login = useCallback(async (email, password) => {
-    const res = await fetch('/api/auth/login', {
+    const res = await apiFetch('/api/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
 
@@ -68,9 +66,8 @@ export const AuthProvider = ({ children }) => {
 
   // Register: strictly create user against /api/auth/register
   const register = useCallback(async (name, email, password) => {
-    const res = await fetch('/api/auth/register', {
+    const res = await apiFetch('/api/auth/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password }),
     });
 
@@ -88,7 +85,7 @@ export const AuthProvider = ({ children }) => {
   // Logout: clear backend session & localStorage
   const logout = useCallback(async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await apiFetch('/api/auth/logout', { method: 'POST' });
     } catch {
       /* ignore errors */
     } finally {

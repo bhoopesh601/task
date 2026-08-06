@@ -7,6 +7,10 @@ import todoRoutes from './routes/todoRoutes.js';
 
 dotenv.config();
 
+if (process.env.DATABASE_URL && !process.env.DATABASE_URL.startsWith('file:') && !process.env.DATABASE_URL.includes('://')) {
+  process.env.DATABASE_URL = `file:${process.env.DATABASE_URL}`;
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -40,7 +44,7 @@ const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
 
 app.use((req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
+  if (req.method !== 'GET' || req.path.startsWith('/api')) return next();
   res.sendFile(path.join(distPath, 'index.html'), (err) => {
     if (err) next();
   });
