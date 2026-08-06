@@ -6,12 +6,15 @@ import SearchBar from '../components/SearchBar';
 import TodoCard from '../components/TodoCard';
 import TodoForm from '../components/TodoForm';
 import Modal, { ConfirmModal } from '../components/Modal';
+import DashboardOverview from '../components/DashboardOverview';
+import SettingsView from '../components/SettingsView';
 import '../styles/dashboard.css';
 
 /**
- * Dashboard Page - Main todo management view.
- * Displays stats, search/filter/sort controls, and todo cards grid.
- * Handles add, edit, delete, and status toggle operations.
+ * Dashboard Page - Central hub supporting:
+ * 1. Dashboard Overview (Calendar & Progress Charts)
+ * 2. My Todos (Task management list)
+ * 3. Settings (Organization & Customization)
  */
 const Dashboard = () => {
   const {
@@ -22,6 +25,8 @@ const Dashboard = () => {
     toggleStatus,
     toast,
   } = useTodos();
+
+  const [activeNav, setActiveNav] = useState('dashboard');
 
   // Modal states
   const [showFormModal, setShowFormModal] = useState(false);
@@ -69,47 +74,66 @@ const Dashboard = () => {
 
   return (
     <div className="app-layout page-enter" id="dashboard-page">
-      <Navbar />
+      <Navbar activeNav={activeNav} onSelectNav={setActiveNav} />
 
       <div className="app-main">
         <main className="dashboard">
-          <div className="dashboard-header">
-            <h1>My Todos</h1>
-          </div>
-
-          <Stats />
-
-          <SearchBar onAddClick={handleAddClick} />
-
-          <div className="todo-list" id="todo-grid">
-            {processedTodos.length > 0 ? (
-              processedTodos.map((todo) => (
-                <TodoCard
-                  key={todo.id}
-                  todo={todo}
-                  onEdit={handleEditClick}
-                  onDelete={handleDeleteClick}
-                  onToggleStatus={toggleStatus}
-                />
-              ))
-            ) : (
-              <div className="empty-state" id="empty-state">
-                <div className="empty-state-icon" aria-hidden="true">
-                  <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                    <rect x="12" y="20" width="40" height="32" rx="6" fill="#FDF0ED" stroke="#EAEAEA"/>
-                    <path d="M20 32h24M20 40h16" stroke="#E44332" strokeWidth="2" strokeLinecap="round" opacity="0.4"/>
-                  </svg>
-                </div>
-                <h3>No todos found</h3>
-                <p>
-                  Create your first todo to get started, or adjust your filters.
-                </p>
-                <button className="btn btn-primary" onClick={handleAddClick}>
-                  Add task
-                </button>
+          {activeNav === 'dashboard' && (
+            <>
+              <div className="dashboard-header">
+                <h1>Dashboard Overview</h1>
               </div>
-            )}
-          </div>
+              <Stats />
+              <DashboardOverview
+                onNavigateToTodos={() => setActiveNav('todos')}
+                onEditTodo={handleEditClick}
+              />
+            </>
+          )}
+
+          {activeNav === 'todos' && (
+            <>
+              <div className="dashboard-header">
+                <h1>My Todos</h1>
+              </div>
+
+              <Stats />
+
+              <SearchBar onAddClick={handleAddClick} />
+
+              <div className="todo-list" id="todo-grid">
+                {processedTodos.length > 0 ? (
+                  processedTodos.map((todo) => (
+                    <TodoCard
+                      key={todo.id}
+                      todo={todo}
+                      onEdit={handleEditClick}
+                      onDelete={handleDeleteClick}
+                      onToggleStatus={toggleStatus}
+                    />
+                  ))
+                ) : (
+                  <div className="empty-state" id="empty-state">
+                    <div className="empty-state-icon" aria-hidden="true">
+                      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                        <rect x="12" y="20" width="40" height="32" rx="6" fill="#FDF0ED" stroke="#EAEAEA"/>
+                        <path d="M20 32h24M20 40h16" stroke="#E44332" strokeWidth="2" strokeLinecap="round" opacity="0.4"/>
+                      </svg>
+                    </div>
+                    <h3>No todos found</h3>
+                    <p>
+                      Create your first todo to get started, or adjust your filters.
+                    </p>
+                    <button className="btn btn-primary" onClick={handleAddClick}>
+                      Add task
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {activeNav === 'settings' && <SettingsView />}
         </main>
       </div>
 

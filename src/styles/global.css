@@ -211,6 +211,48 @@ textarea {
   background: var(--text-tertiary);
 }
 
+/* ---- Universal Theme Switcher Button ---- */
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Light mode button: Rounded square with border and dark outline moon */
+.theme-toggle-btn--light {
+  background: var(--bg-secondary, #ffffff);
+  border: 1.5px solid #2b2b2b;
+  color: #2b2b2b;
+}
+
+.theme-toggle-btn--light:hover {
+  background: #f3f3f3;
+  border-color: #000000;
+  color: #000000;
+}
+
+/* Dark mode button: Filled rounded square with dark bg and solid white moon */
+.theme-toggle-btn--dark {
+  background: #2b2b2b;
+  border: 1.5px solid #383838;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.theme-toggle-btn--dark:hover {
+  background: #383838;
+  border-color: #484848;
+  color: #ffffff;
+}
+
 /* ---- Common Button Styles ---- */
 .btn {
   display: inline-flex;

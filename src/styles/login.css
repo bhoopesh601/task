@@ -62,28 +62,6 @@
   top: 24px;
   right: 24px;
   z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border: 1px solid var(--login-border);
-  border-radius: 50%;
-  background: var(--login-toggle-bg);
-  color: var(--login-toggle-color);
-  cursor: pointer;
-  transition: background var(--login-transition), border-color var(--login-transition), color var(--login-transition), transform var(--login-transition);
-}
-
-.login-theme-toggle:hover {
-  background: var(--login-toggle-hover);
-  transform: scale(1.05);
-}
-
-.login-theme-toggle:focus-visible {
-  outline: 2px solid var(--login-brand);
-  outline-offset: 2px;
 }
 
 /* ── Left form panel ── */
