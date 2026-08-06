@@ -37,11 +37,16 @@ export const apiFetch = async (endpoint, options = {}) => {
     'Content-Type': 'application/json',
   };
 
+  // Retrieve token from localStorage
+  const token = localStorage.getItem('token');
+  const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+
   try {
     const response = await fetch(url, {
       ...options,
       headers: {
         ...defaultHeaders,
+        ...authHeaders,
         ...options.headers,
       },
       credentials: options.credentials || 'include',

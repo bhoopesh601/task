@@ -23,8 +23,21 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Check auth session on startup against /api/auth/me
+  // The Bearer token stored in localStorage is sent automatically by apiFetch,
+  // so this works even when cross-origin cookies are blocked by the browser.
   useEffect(() => {
     const checkAuth = async () => {
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem(AUTH_USER_KEY);
+
+      // If no token exists at all, we are definitely logged out
+      if (!storedToken) {
+        setUser(null);
+        localStorage.removeItem(AUTH_USER_KEY);
+        setLoading(false);
+        return;
+      }
+
       try {
         const res = await apiFetch('/api/auth/me');
         if (res.ok) {
@@ -32,13 +45,19 @@ export const AuthProvider = ({ children }) => {
           setUser(data.user);
           localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
         } else {
+          // Token is invalid or expired — clear everything
           setUser(null);
           localStorage.removeItem(AUTH_USER_KEY);
+          localStorage.removeItem('token');
         }
       } catch (err) {
         console.warn('Auth check error:', err.message);
-        setUser(null);
-        localStorage.removeItem(AUTH_USER_KEY);
+        // Network error: keep the cached user so UI doesn't flicker on reconnect
+        if (storedUser) {
+          try { setUser(JSON.parse(storedUser)); } catch { setUser(null); }
+        } else {
+          setUser(null);
+        }
       } finally {
         setLoading(false);
       }
@@ -59,6 +78,9 @@ export const AuthProvider = ({ children }) => {
       throw new Error(data.error || 'Invalid email or password');
     }
 
+    // Store JWT in localStorage so apiFetch can send it as Bearer header
+    // (fixes cross-origin 401s where cookies are blocked by the browser)
+    if (data.token) localStorage.setItem('token', data.token);
     setUser(data.user);
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
     return { success: true, user: data.user };
@@ -77,12 +99,14 @@ export const AuthProvider = ({ children }) => {
       throw new Error(data.error || 'Registration failed');
     }
 
+    // Store JWT so Bearer auth works cross-origin
+    if (data.token) localStorage.setItem('token', data.token);
     setUser(data.user);
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
     return { success: true, user: data.user };
   }, []);
 
-  // Logout: clear backend session & localStorage
+  // Logout: clear backend session & localStorage (including stored JWT)
   const logout = useCallback(async () => {
     try {
       await apiFetch('/api/auth/logout', { method: 'POST' });
@@ -91,6 +115,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setUser(null);
       localStorage.removeItem(AUTH_USER_KEY);
+      localStorage.removeItem('token'); // Remove Bearer token so no stale auth remains
     }
   }, []);
 
