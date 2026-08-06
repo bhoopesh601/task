@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useTodos } from '../context/TodoContext';
+import { isValidEmail } from '../utils/helpers';
 import ThemeToggle from './ThemeToggle';
 import PriorityIcon from './PriorityIcon';
 
@@ -11,18 +12,55 @@ import PriorityIcon from './PriorityIcon';
  * Manages profile information, default priority/sort preferences, and theme options.
  */
 const SettingsView = () => {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const { theme } = useTheme();
   const { sortBy, setSortBy, showToast } = useTodos();
 
-  const [profileName, setProfileName] = useState(user?.name || user?.email?.split('@')[0] || 'User');
-  const [profileEmail, setProfileEmail] = useState(user?.email || 'user@example.com');
+  const [profileName, setProfileName] = useState(user?.name || '');
+  const [profileEmail, setProfileEmail] = useState(user?.email || '');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [defaultPriority, setDefaultPriority] = useState('Medium');
   const [taskNotification, setTaskNotification] = useState(true);
 
-  const handleSaveProfile = (e) => {
+  // Sync inputs with user details upon mounting / updating
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name || '');
+      setProfileEmail(user.email || '');
+    }
+  }, [user]);
+
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
-    showToast('Profile updated successfully! 👤');
+
+    const name = profileName.trim();
+    const email = profileEmail.trim();
+
+    if (!name) {
+      showToast('Full Name is required', 'error');
+      return;
+    }
+
+    if (!email) {
+      showToast('Email Address is required', 'error');
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      showToast('Please enter a valid email address', 'error');
+      return;
+    }
+
+    setIsSavingProfile(true);
+
+    try {
+      await updateProfile(name, email);
+      showToast('Profile updated successfully! 👤', 'success');
+    } catch (err) {
+      showToast(err.message || 'Failed to update profile', 'error');
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   const handleSaveDefaults = (e) => {
@@ -78,6 +116,7 @@ const SettingsView = () => {
                   className="input-field"
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
+                  placeholder="Enter your name..."
                 />
               </div>
               <div className="settings-field">
@@ -88,10 +127,11 @@ const SettingsView = () => {
                   className="input-field"
                   value={profileEmail}
                   onChange={(e) => setProfileEmail(e.target.value)}
+                  placeholder="Enter your email..."
                 />
               </div>
-              <button type="submit" className="btn btn-primary btn-sm">
-                Save Profile
+              <button type="submit" className="btn btn-primary btn-sm" disabled={isSavingProfile}>
+                {isSavingProfile ? 'Saving...' : 'Save Profile'}
               </button>
             </form>
           </div>

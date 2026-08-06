@@ -169,4 +169,80 @@ router.get('/me', requireAuth, async (req, res) => {
   }
 });
 
+// Profile Update Schema
+const updateProfileSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email address'),
+});
+
+const handleUpdateProfile = async (req, res) => {
+  try {
+    const parseResult = updateProfileSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues?.[0]?.message || parseResult.error.message || 'Validation failed';
+      return res.status(400).json({ error: errorMsg });
+    }
+
+    const { name, email } = parseResult.data;
+    const normalizedEmail = email.toLowerCase().trim();
+    const userId = req.user.userId;
+
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!currentUser) {
+      return res.status(444).json({ error: 'User not found' });
+    }
+
+    // Check email uniqueness if email is changed
+    if (normalizedEmail !== currentUser.email) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      });
+
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(409).json({ error: 'An account with this email address already exists' });
+      }
+    }
+
+    // Update user profile in database
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: name.trim(),
+        email: normalizedEmail,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+      },
+    });
+
+    // Generate updated JWT token
+    const token = generateToken({ userId: updatedUser.id, email: updatedUser.email });
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({ user: updatedUser, token, message: 'Profile updated successfully' });
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ error: error.message || 'Internal server error updating profile' });
+  }
+};
+
+/**
+ * PUT /api/auth/profile & PUT /api/auth/me
+ * Update user full name and email address
+ */
+router.put('/profile', requireAuth, handleUpdateProfile);
+router.put('/me', requireAuth, handleUpdateProfile);
+
 export default router;

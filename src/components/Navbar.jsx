@@ -23,9 +23,12 @@ const Navbar = ({ activeNav: externalActiveNav, onSelectNav }) => {
     }
   };
 
-  const getInitials = (email) => {
-    if (!email) return '?';
-    return email.charAt(0).toUpperCase();
+  const getInitials = (userData) => {
+    const nameStr = userData?.name?.trim();
+    if (nameStr) return nameStr.charAt(0).toUpperCase();
+    const emailStr = userData?.email?.trim();
+    if (emailStr) return emailStr.charAt(0).toUpperCase();
+    return '?';
   };
 
   return (
@@ -43,7 +46,7 @@ const Navbar = ({ activeNav: externalActiveNav, onSelectNav }) => {
         </div>
 
         <div className="sidebar-user" id="user-info">
-          <div className="sidebar-user-avatar">{getInitials(user?.email)}</div>
+          <div className="sidebar-user-avatar">{getInitials(user)}</div>
           <span className="sidebar-user-email">{user?.email}</span>
         </div>
 

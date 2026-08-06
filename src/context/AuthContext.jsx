@@ -119,6 +119,25 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Update Profile: update user credentials against /api/auth/profile
+  const updateProfile = useCallback(async (name, email) => {
+    const res = await apiFetch('/api/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify({ name, email }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to update profile');
+    }
+
+    if (data.token) localStorage.setItem('token', data.token);
+    setUser(data.user);
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
+    return { success: true, user: data.user };
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
@@ -127,8 +146,9 @@ export const AuthProvider = ({ children }) => {
       login,
       register,
       logout,
+      updateProfile,
     }),
-    [user, loading, login, register, logout]
+    [user, loading, login, register, logout, updateProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
