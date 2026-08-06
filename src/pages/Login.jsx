@@ -37,7 +37,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const { theme } = useTheme();
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const navigate = useNavigate();
 
   const isSignUp = mode === 'signup';
@@ -88,8 +88,6 @@ const Login = () => {
       newErrors.email = 'Email is required';
     } else if (!isValidEmail(email)) {
       newErrors.email = 'Please enter a valid email address';
-    } else if (getRegisteredUsers().some((u) => u.email.toLowerCase() === email.trim().toLowerCase())) {
-      newErrors.email = 'An account with this email already exists';
     }
 
     if (!password.trim()) {
@@ -113,12 +111,16 @@ const Login = () => {
     if (!validateLogin()) return;
 
     setIsLoading(true);
+    setErrors({});
 
-    setTimeout(() => {
-      login(email);
+    try {
+      await login(email.trim(), password);
       setIsLoading(false);
       navigate('/dashboard');
-    }, 600);
+    } catch (err) {
+      setIsLoading(false);
+      setErrors({ email: err.message || 'Invalid email or password' });
+    }
   };
 
   const handleRegister = async (e) => {
@@ -126,18 +128,16 @@ const Login = () => {
     if (!validateSignUp()) return;
 
     setIsLoading(true);
+    setErrors({});
 
-    setTimeout(() => {
-      saveRegisteredUser({
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        password,
-        createdAt: new Date().toISOString(),
-      });
-      login(email.trim());
+    try {
+      await register(name.trim(), email.trim(), password);
       setIsLoading(false);
       navigate('/dashboard');
-    }, 600);
+    } catch (err) {
+      setIsLoading(false);
+      setErrors({ email: err.message || 'Registration failed' });
+    }
   };
 
   const handleSubmit = isSignUp ? handleRegister : handleLogin;

@@ -6,7 +6,8 @@ const AUTH_USER_KEY = 'authUser';
 
 /**
  * AuthProvider manages authentication state.
- * Connects to /api/auth endpoints with fallback support for offline/local storage.
+ * Strictly verifies user credentials against database API (/api/auth).
+ * No auto-registration or mock login fallback allowed.
  */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
@@ -20,7 +21,7 @@ export const AuthProvider = ({ children }) => {
 
   const [loading, setLoading] = useState(true);
 
-  // Check auth session on startup
+  // Check auth session on startup against /api/auth/me
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -31,9 +32,14 @@ export const AuthProvider = ({ children }) => {
           const data = await res.json();
           setUser(data.user);
           localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
+        } else {
+          setUser(null);
+          localStorage.removeItem(AUTH_USER_KEY);
         }
       } catch (err) {
-        console.warn('Backend server not reachable, using local session state:', err.message);
+        console.warn('Auth check error:', err.message);
+        setUser(null);
+        localStorage.removeItem(AUTH_USER_KEY);
       } finally {
         setLoading(false);
       }
@@ -41,63 +47,42 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  // Login: authenticate against /api/auth/login
+  // Login: strictly authenticate against /api/auth/login
   const login = useCallback(async (email, password) => {
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
-
-      setUser(data.user);
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
-      return { success: true, user: data.user };
-    } catch (err) {
-      // Local fallback if API server is offline or mock login requested
-      if (err.message.includes('Failed to fetch') || !password) {
-        const fallbackUser = { email, loggedInAt: new Date().toISOString() };
-        setUser(fallbackUser);
-        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(fallbackUser));
-        return { success: true, user: fallbackUser };
-      }
-      throw err;
+    if (!res.ok) {
+      throw new Error(data.error || 'Invalid email or password');
     }
+
+    setUser(data.user);
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
+    return { success: true, user: data.user };
   }, []);
 
-  // Register: create user against /api/auth/register
+  // Register: strictly create user against /api/auth/register
   const register = useCallback(async (name, email, password) => {
-    try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
-      });
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password }),
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
-
-      setUser(data.user);
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
-      return { success: true, user: data.user };
-    } catch (err) {
-      if (err.message.includes('Failed to fetch')) {
-        const fallbackUser = { name, email, loggedInAt: new Date().toISOString() };
-        setUser(fallbackUser);
-        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(fallbackUser));
-        return { success: true, user: fallbackUser };
-      }
-      throw err;
+    if (!res.ok) {
+      throw new Error(data.error || 'Registration failed');
     }
+
+    setUser(data.user);
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
+    return { success: true, user: data.user };
   }, []);
 
   // Logout: clear backend session & localStorage
@@ -105,7 +90,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch {
-      /* ignore offline errors */
+      /* ignore errors */
     } finally {
       setUser(null);
       localStorage.removeItem(AUTH_USER_KEY);

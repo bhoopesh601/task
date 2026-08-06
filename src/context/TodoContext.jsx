@@ -1,16 +1,16 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
-import useLocalStorage from '../hooks/useLocalStorage';
-import { generateId, sampleTodos, sortTodos, filterTodos, searchTodos } from '../utils/helpers';
+import { useAuth } from './AuthContext';
+import { sortTodos, filterTodos, searchTodos } from '../utils/helpers';
 
 const TodoContext = createContext(null);
 
 /**
  * TodoProvider manages all todo state including CRUD, search, filter, and sort.
- * Connects to /api/todos backend with fallback to localStorage.
+ * Strictly fetches and manipulates data for the authenticated user via /api/todos.
  */
 export const TodoProvider = ({ children }) => {
-  const [localTodos, setLocalTodos] = useLocalStorage('todos', sampleTodos);
-  const [todos, setTodos] = useState(localTodos);
+  const { user } = useAuth();
+  const [todos, setTodos] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [sortBy, setSortBy] = useState('latest');
@@ -23,23 +23,29 @@ export const TodoProvider = ({ children }) => {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  // Fetch todos from backend API
+  // Fetch todos from backend API for the current authenticated user
   const fetchTodos = useCallback(async () => {
+    if (!user) {
+      setTodos([]);
+      return;
+    }
     try {
       const res = await fetch('/api/todos');
       if (res.ok) {
         const data = await res.json();
         setTodos(data);
-        setLocalTodos(data);
+      } else {
+        setTodos([]);
       }
     } catch {
-      /* Fallback to local storage state if backend offline */
+      setTodos([]);
     }
-  }, [setLocalTodos]);
+  }, [user]);
 
+  // Re-fetch todos whenever authenticated user changes
   useEffect(() => {
     fetchTodos();
-  }, [fetchTodos]);
+  }, [fetchTodos, user]);
 
   // CRUD Operations
   const addTodo = useCallback(async (todoData) => {
@@ -54,23 +60,14 @@ export const TodoProvider = ({ children }) => {
         const newTodo = await res.json();
         setTodos((prev) => [newTodo, ...prev]);
         showToast('Todo added successfully! ✅');
-        return;
+      } else {
+        const errData = await res.json();
+        showToast(errData.error || 'Failed to add todo', 'error');
       }
-    } catch {
-      /* fallback below */
+    } catch (err) {
+      showToast('Error adding todo', 'error');
     }
-
-    // Fallback if offline
-    const newTodo = {
-      ...todoData,
-      id: generateId(),
-      createdDate: new Date().toISOString(),
-      status: 'Pending',
-    };
-    setTodos((prev) => [newTodo, ...prev]);
-    setLocalTodos((prev) => [newTodo, ...prev]);
-    showToast('Todo added successfully! ✅');
-  }, [setLocalTodos, showToast]);
+  }, [showToast]);
 
   const updateTodo = useCallback(async (id, updatedData) => {
     try {
@@ -84,20 +81,14 @@ export const TodoProvider = ({ children }) => {
         const updated = await res.json();
         setTodos((prev) => prev.map((t) => (t.id === id ? updated : t)));
         showToast('Todo updated successfully! ✏️');
-        return;
+      } else {
+        const errData = await res.json();
+        showToast(errData.error || 'Failed to update todo', 'error');
       }
     } catch {
-      /* fallback below */
+      showToast('Error updating todo', 'error');
     }
-
-    setTodos((prev) =>
-      prev.map((todo) => (todo.id === id ? { ...todo, ...updatedData } : todo))
-    );
-    setLocalTodos((prev) =>
-      prev.map((todo) => (todo.id === id ? { ...todo, ...updatedData } : todo))
-    );
-    showToast('Todo updated successfully! ✏️');
-  }, [setLocalTodos, showToast]);
+  }, [showToast]);
 
   const deleteTodo = useCallback(async (id) => {
     try {
@@ -108,16 +99,14 @@ export const TodoProvider = ({ children }) => {
       if (res.ok) {
         setTodos((prev) => prev.filter((t) => t.id !== id));
         showToast('Todo deleted successfully! 🗑️', 'error');
-        return;
+      } else {
+        const errData = await res.json();
+        showToast(errData.error || 'Failed to delete todo', 'error');
       }
     } catch {
-      /* fallback below */
+      showToast('Error deleting todo', 'error');
     }
-
-    setTodos((prev) => prev.filter((todo) => todo.id !== id));
-    setLocalTodos((prev) => prev.filter((todo) => todo.id !== id));
-    showToast('Todo deleted successfully! 🗑️', 'error');
-  }, [setLocalTodos, showToast]);
+  }, [showToast]);
 
   const toggleStatus = useCallback(async (id) => {
     const target = todos.find((t) => t.id === id);
@@ -135,23 +124,11 @@ export const TodoProvider = ({ children }) => {
       if (res.ok) {
         const updated = await res.json();
         setTodos((prev) => prev.map((t) => (t.id === id ? updated : t)));
-        return;
       }
     } catch {
-      /* fallback below */
+      /* ignore toggle errors */
     }
-
-    setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === id ? { ...todo, status: newStatus } : todo
-      )
-    );
-    setLocalTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === id ? { ...todo, status: newStatus } : todo
-      )
-    );
-  }, [todos, setLocalTodos]);
+  }, [todos]);
 
   // Computed / derived data with search, filter, and sort applied
   const processedTodos = useMemo(() => {
@@ -162,7 +139,7 @@ export const TodoProvider = ({ children }) => {
     return result;
   }, [todos, searchQuery, activeFilter, sortBy]);
 
-  // Statistics
+  // Statistics derived exclusively from user's isolated todos
   const stats = useMemo(() => ({
     total: todos.length,
     completed: todos.filter((t) => t.status === 'Completed').length,
