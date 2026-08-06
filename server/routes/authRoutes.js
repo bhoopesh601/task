@@ -18,11 +18,7 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
-/**
- * POST /api/auth/register
- * Register a new user with hashed password and unique email constraint check
- */
-router.post('/register', async (req, res) => {
+const handleRegister = async (req, res) => {
   try {
     const parseResult = registerSchema.safeParse(req.body);
     if (!parseResult.success) {
@@ -39,7 +35,7 @@ router.post('/register', async (req, res) => {
     });
 
     if (existingUser) {
-      return res.status(400).json({ error: 'An account with this email already exists' });
+      return res.status(409).json({ error: 'An account with this email already exists' });
     }
 
     // Secure password hashing using bcrypt
@@ -74,7 +70,14 @@ router.post('/register', async (req, res) => {
     console.error('Registration error:', error);
     res.status(500).json({ error: error.message || 'Internal server error during registration' });
   }
-});
+};
+
+/**
+ * POST /api/auth/register and /api/auth/signup
+ * Register a new user with hashed password and unique email constraint check
+ */
+router.post('/register', handleRegister);
+router.post('/signup', handleRegister);
 
 /**
  * POST /api/auth/login

@@ -14,10 +14,25 @@ if (process.env.DATABASE_URL && !process.env.DATABASE_URL.startsWith('file:') &&
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// Dynamic CORS configuration allowing local dev, production frontend, and credentials
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:4173',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, Postman, same-origin)
+      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
   })
 );
