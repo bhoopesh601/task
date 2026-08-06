@@ -1,4 +1,5 @@
 import { formatDate } from '../utils/helpers';
+import PriorityIcon from './PriorityIcon';
 
 /**
  * TodoCard - Displays a single todo item as a card.
@@ -56,6 +57,7 @@ const TodoCard = ({ todo, onEdit, onDelete, onToggleStatus }) => {
 
       <div className="todo-card-meta">
         <span className={`todo-badge ${badgePriorityClass}`}>
+          <PriorityIcon priority={todo.priority} size={14} style={{ marginRight: 4 }} />
           {todo.priority}
         </span>
         <span className={`todo-badge ${badgeStatusClass}`}>

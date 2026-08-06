@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useTodos } from '../context/TodoContext';
 import { formatDate } from '../utils/helpers';
+import PriorityIcon from './PriorityIcon';
 
 /**
  * DashboardOverview — Analytics view containing:
@@ -160,7 +161,10 @@ const DashboardOverview = ({ onNavigateToTodos, onEditTodo }) => {
             {/* High Priority Bar */}
             <div className="bar-group">
               <div className="bar-label-row">
-                <span className="bar-name">High Priority</span>
+                <span className="bar-name">
+                  <PriorityIcon priority="High" size={15} style={{ marginRight: 6 }} />
+                  High Priority
+                </span>
                 <span className="bar-count">{highCount}</span>
               </div>
               <div className="bar-track">
@@ -174,7 +178,10 @@ const DashboardOverview = ({ onNavigateToTodos, onEditTodo }) => {
             {/* Medium Priority Bar */}
             <div className="bar-group">
               <div className="bar-label-row">
-                <span className="bar-name">Medium Priority</span>
+                <span className="bar-name">
+                  <PriorityIcon priority="Medium" size={15} style={{ marginRight: 6 }} />
+                  Medium Priority
+                </span>
                 <span className="bar-count">{mediumCount}</span>
               </div>
               <div className="bar-track">
@@ -188,7 +195,10 @@ const DashboardOverview = ({ onNavigateToTodos, onEditTodo }) => {
             {/* Low Priority Bar */}
             <div className="bar-group">
               <div className="bar-label-row">
-                <span className="bar-name">Low Priority</span>
+                <span className="bar-name">
+                  <PriorityIcon priority="Low" size={15} style={{ marginRight: 6 }} />
+                  Low Priority
+                </span>
                 <span className="bar-count">{lowCount}</span>
               </div>
               <div className="bar-track">
@@ -288,6 +298,7 @@ const DashboardOverview = ({ onNavigateToTodos, onEditTodo }) => {
                           {todo.title}
                         </span>
                         <span className="cal-todo-meta">
+                          <PriorityIcon priority={todo.priority} size={13} style={{ marginRight: 4 }} />
                           Priority: {todo.priority} | Status: {todo.status}
                         </span>
                       </div>

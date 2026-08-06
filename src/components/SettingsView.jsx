@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useTodos } from '../context/TodoContext';
 import ThemeToggle from './ThemeToggle';
+import PriorityIcon from './PriorityIcon';
 
 /**
  * SettingsView — Application Settings Page
@@ -159,15 +160,24 @@ const SettingsView = () => {
             <div className="settings-card-body">
               <div className="status-badges-list">
                 <div className="badge-item">
-                  <span className="badge-chip priority-high">High Priority</span>
+                  <span className="badge-chip priority-high">
+                    <PriorityIcon priority="High" size={13} style={{ marginRight: 4 }} />
+                    High Priority
+                  </span>
                   <span className="badge-desc">Urgent tasks with immediate deadlines</span>
                 </div>
                 <div className="badge-item">
-                  <span className="badge-chip priority-medium">Medium Priority</span>
+                  <span className="badge-chip priority-medium">
+                    <PriorityIcon priority="Medium" size={13} style={{ marginRight: 4 }} />
+                    Medium Priority
+                  </span>
                   <span className="badge-desc">Standard daily operations</span>
                 </div>
                 <div className="badge-item">
-                  <span className="badge-chip priority-low">Low Priority</span>
+                  <span className="badge-chip priority-low">
+                    <PriorityIcon priority="Low" size={13} style={{ marginRight: 4 }} />
+                    Low Priority
+                  </span>
                   <span className="badge-desc">Low urgency or optional tasks</span>
                 </div>
               </div>

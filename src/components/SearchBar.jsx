@@ -1,4 +1,5 @@
 import { useTodos } from '../context/TodoContext';
+import PriorityIcon from './PriorityIcon';
 
 /**
  * SearchBar - Provides instant search over todo titles and descriptions.
@@ -63,6 +64,9 @@ const SearchBar = ({ onAddClick }) => {
               onClick={() => setActiveFilter(filter.key)}
               id={`filter-${filter.key}`}
             >
+              {['high', 'medium', 'low'].includes(filter.key) && (
+                <PriorityIcon priority={filter.key} size={14} style={{ marginRight: 5 }} />
+              )}
               {filter.label}
             </button>
           ))}

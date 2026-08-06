@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getTodayDate } from '../utils/helpers';
+import PrioritySelect from './PrioritySelect';
 
 /**
  * TodoForm - Form for creating or editing a todo.
@@ -93,17 +94,12 @@ const TodoForm = ({ editingTodo, onSubmit, onCancel }) => {
       <div className="form-row">
         <div className="input-group">
           <label htmlFor="todo-priority">Priority</label>
-          <select
+          <PrioritySelect
             id="todo-priority"
             name="priority"
-            className="select-field"
             value={formData.priority}
             onChange={handleChange}
-          >
-            <option value="Low">🟢 Low</option>
-            <option value="Medium">🟡 Medium</option>
-            <option value="High">🔴 High</option>
-          </select>
+          />
         </div>
 
         <div className="input-group">

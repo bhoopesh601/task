@@ -1407,3 +1407,94 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Custom Priority Select Dropdown */
+.priority-select-custom {
+  position: relative;
+  width: 100%;
+}
+
+.priority-select-trigger {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  transition: all var(--transition-fast);
+}
+
+.priority-select-trigger:focus,
+.priority-select-trigger.open {
+  border-color: var(--border-color-focus);
+  box-shadow: 0 0 0 3px var(--accent-primary-light);
+}
+
+.priority-select-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.priority-select-arrow {
+  color: var(--text-tertiary);
+  font-size: 0.7rem;
+  transition: transform var(--transition-fast);
+}
+
+.priority-select-arrow.open {
+  transform: rotate(180deg);
+}
+
+.priority-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--card-bg, #1e293b);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+  overflow: hidden;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: modalSlideIn 0.15s ease;
+}
+
+.priority-select-option {
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  transition: background var(--transition-fast);
+}
+
+.priority-select-option:hover {
+  background: var(--bg-hover);
+}
+
+.priority-select-option.selected {
+  background: #2563eb;
+  color: #ffffff;
+}
+
