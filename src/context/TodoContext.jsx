@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { sortTodos, filterTodos, searchTodos } from '../utils/helpers';
 import { apiFetch } from '../utils/api';
@@ -7,7 +7,8 @@ const TodoContext = createContext(null);
 
 /**
  * TodoProvider manages all todo state including CRUD, search, filter, and sort.
- * Strictly fetches and manipulates data for the authenticated user via /api/todos.
+ * Each user's todos are strictly isolated — todos are cleared immediately
+ * whenever the logged-in user changes, then re-fetched for the new user.
  */
 export const TodoProvider = ({ children }) => {
   const { user } = useAuth();
@@ -24,29 +25,53 @@ export const TodoProvider = ({ children }) => {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  // Fetch todos from backend API for the current authenticated user
-  const fetchTodos = useCallback(async () => {
+  // Track the current userId so we can detect user switches
+  const currentUserIdRef = useRef(user?.id ?? null);
+
+  // Fetch todos from backend API for the current authenticated user.
+  // Uses a cancellation flag to discard stale responses if the user
+  // changes while a fetch is in flight.
+  const fetchTodos = useCallback(async (signal) => {
     if (!user) {
       setTodos([]);
       return;
     }
     try {
       const res = await apiFetch('/api/todos');
+      // Discard response if user changed while request was in flight
+      if (signal?.aborted) return;
       if (res.ok) {
         const data = await res.json();
-        setTodos(data);
+        if (!signal?.aborted) setTodos(data);
       } else {
-        setTodos([]);
+        if (!signal?.aborted) setTodos([]);
       }
     } catch {
-      setTodos([]);
+      if (!signal?.aborted) setTodos([]);
     }
   }, [user]);
 
-  // Re-fetch todos whenever authenticated user changes
+  // Whenever the user identity changes (login / logout / switch account):
+  //   1. Immediately wipe todos so no stale data is shown
+  //   2. Fetch fresh todos for the new user
+  //   3. Abort any in-flight fetch from the previous user
   useEffect(() => {
-    fetchTodos();
-  }, [fetchTodos, user]);
+    const newUserId = user?.id ?? null;
+
+    // Always clear todos first to prevent cross-user data leakage
+    setTodos([]);
+    currentUserIdRef.current = newUserId;
+
+    if (!newUserId) return; // Logged out — nothing to fetch
+
+    // AbortController lets us cancel the fetch if user changes again quickly
+    const controller = new AbortController();
+    fetchTodos(controller.signal);
+
+    return () => {
+      controller.abort(); // Cleanup: cancel fetch on unmount or user change
+    };
+  }, [user?.id]); // Depend only on userId — not the whole user object
 
   // CRUD Operations
   const addTodo = useCallback(async (todoData) => {
@@ -145,6 +170,9 @@ export const TodoProvider = ({ children }) => {
     highPriority: todos.filter((t) => t.priority === 'High').length,
   }), [todos]);
 
+  // Manual refresh (e.g. pull-to-refresh) — no abort signal needed
+  const refreshTodos = useCallback(() => fetchTodos(), [fetchTodos]);
+
   const value = useMemo(
     () => ({
       todos,
@@ -162,9 +190,9 @@ export const TodoProvider = ({ children }) => {
       toggleStatus,
       toast,
       showToast,
-      refreshTodos: fetchTodos,
+      refreshTodos,
     }),
-    [todos, processedTodos, stats, searchQuery, activeFilter, sortBy, addTodo, updateTodo, deleteTodo, toggleStatus, toast, showToast, fetchTodos]
+    [todos, processedTodos, stats, searchQuery, activeFilter, sortBy, addTodo, updateTodo, deleteTodo, toggleStatus, toast, showToast, refreshTodos]
   );
 
   return <TodoContext.Provider value={value}>{children}</TodoContext.Provider>;
