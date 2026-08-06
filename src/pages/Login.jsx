@@ -121,7 +121,7 @@ const Login = () => {
       navigate('/dashboard');
     } catch (err) {
       setIsLoading(false);
-      setErrors({ email: err.message || 'Invalid email or password' });
+      setErrors({ password: err.message || 'Invalid email or password' });
     }
   };
 
