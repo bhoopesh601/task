@@ -143,6 +143,44 @@
   transition: border-color var(--login-transition), box-shadow var(--login-transition), background-color 0.25s ease, color 0.25s ease;
 }
 
+.lf-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.lf-input-wrapper .lf-input {
+  padding-right: 42px;
+}
+
+.lf-password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--login-subtext);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color var(--login-transition), background-color var(--login-transition);
+}
+
+.lf-password-toggle:hover {
+  color: var(--login-text);
+  background-color: var(--login-toggle-bg);
+}
+
+.lf-password-toggle:focus-visible {
+  outline: 2px solid var(--login-brand);
+  outline-offset: 1px;
+}
+
 .lf-input::placeholder {
   color: var(--login-placeholder);
 }
