@@ -3,6 +3,7 @@ import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 import { hashPassword, comparePassword, generateToken } from '../lib/auth.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
+import { sendOtpEmail } from '../lib/mailer.js';
 
 const router = Router();
 
@@ -244,5 +245,112 @@ const handleUpdateProfile = async (req, res) => {
  */
 router.put('/profile', requireAuth, handleUpdateProfile);
 router.put('/me', requireAuth, handleUpdateProfile);
+
+// In-memory store for OTPs (Email -> { otp, expiresAt })
+const otpStore = new Map();
+
+// Zod schemas for OTP validation
+const sendOtpSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  reason: z.string().optional(),
+});
+
+const verifyOtpSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  otp: z.string().length(6, 'OTP must be 6 digits'),
+});
+
+/**
+ * POST /api/auth/send-otp
+ * Generates a 6-digit OTP code and sends it via SMTP email (Hostinger / Gmail)
+ */
+router.post('/send-otp', async (req, res) => {
+  try {
+    const parseResult = sendOtpSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues?.[0]?.message || 'Validation failed';
+      return res.status(400).json({ error: errorMsg });
+    }
+
+    const { email, reason } = parseResult.data;
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Generate random 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
+
+    otpStore.set(normalizedEmail, { otp, expiresAt });
+
+    const isSmtpConfigured = Boolean(process.env.SMTP_USER && process.env.SMTP_PASS);
+
+    if (isSmtpConfigured) {
+      try {
+        await sendOtpEmail({
+          to: normalizedEmail,
+          otp,
+          subject: reason === 'password-reset' ? 'Password Reset Verification Code' : 'Your Verification Code',
+        });
+        return res.json({ message: 'OTP sent successfully to your email' });
+      } catch (mailError) {
+        console.error('Failed to send OTP email via SMTP:', mailError);
+        return res.status(500).json({
+          error: `Failed to send email via SMTP: ${mailError.message}. Check SMTP configuration in .env.`,
+        });
+      }
+    } else {
+      console.log(`\n========================================`);
+      console.log(`[OTP NOTICE] SMTP credentials not fully configured in .env.`);
+      console.log(`Generated OTP for ${normalizedEmail}: ${otp}`);
+      console.log(`========================================\n`);
+      return res.json({
+        message: 'OTP generated. (Configure SMTP_USER & SMTP_PASS in .env to receive real emails via Hostinger/Gmail)',
+        devOtp: process.env.NODE_ENV !== 'production' ? otp : undefined,
+      });
+    }
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({ error: error.message || 'Internal server error sending OTP' });
+  }
+});
+
+/**
+ * POST /api/auth/verify-otp
+ * Verifies 6-digit OTP code against store
+ */
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const parseResult = verifyOtpSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues?.[0]?.message || 'Validation failed';
+      return res.status(400).json({ error: errorMsg });
+    }
+
+    const { email, otp } = parseResult.data;
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const storedData = otpStore.get(normalizedEmail);
+
+    if (!storedData) {
+      return res.status(400).json({ error: 'No OTP requested for this email address or OTP has expired' });
+    }
+
+    if (Date.now() > storedData.expiresAt) {
+      otpStore.delete(normalizedEmail);
+      return res.status(400).json({ error: 'OTP has expired. Please request a new code.' });
+    }
+
+    if (storedData.otp !== otp.trim()) {
+      return res.status(400).json({ error: 'Invalid verification code. Please check and try again.' });
+    }
+
+    // OTP verified successfully, clear from store
+    otpStore.delete(normalizedEmail);
+
+    res.json({ message: 'OTP verified successfully' });
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({ error: error.message || 'Internal server error verifying OTP' });
+  }
+});
 
 export default router;

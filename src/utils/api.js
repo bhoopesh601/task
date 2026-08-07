@@ -93,4 +93,28 @@ export const apiFetch = async (endpoint, options = {}) => {
   }
 };
 
+/**
+ * Send OTP to user's email via Hostinger/Gmail SMTP
+ * @param {string} email
+ * @param {string} [reason] - e.g. 'verification' or 'password-reset'
+ */
+export const sendOtp = async (email, reason = 'verification') => {
+  return apiFetch('/api/auth/send-otp', {
+    method: 'POST',
+    body: JSON.stringify({ email, reason }),
+  });
+};
+
+/**
+ * Verify OTP entered by user
+ * @param {string} email
+ * @param {string} otp - 6-digit OTP code
+ */
+export const verifyOtp = async (email, otp) => {
+  return apiFetch('/api/auth/verify-otp', {
+    method: 'POST',
+    body: JSON.stringify({ email, otp }),
+  });
+};
+
 export default apiFetch;
