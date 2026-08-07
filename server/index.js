@@ -1,3 +1,5 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -6,6 +8,10 @@ import authRoutes from './routes/authRoutes.js';
 import todoRoutes from './routes/todoRoutes.js';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const distPath = path.join(__dirname, '../dist');
 
 if (process.env.DATABASE_URL && !process.env.DATABASE_URL.startsWith('file:') && !process.env.DATABASE_URL.includes('://')) {
   process.env.DATABASE_URL = `file:${process.env.DATABASE_URL}`;
@@ -48,19 +54,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API 404 Fallback
-app.all('/api/*', (req, res) => {
+// API 404 Fallback (Express 5 compatible)
+app.use('/api', (req, res) => {
   res.status(404).json({ error: `API endpoint ${req.originalUrl} not found` });
 });
 
 // Serve frontend static assets in production
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const distPath = path.join(__dirname, '../dist');
-
 app.use(express.static(distPath));
 
 app.use((req, res, next) => {
@@ -79,3 +78,4 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 TaskFlow API Server running on port ${PORT}`);
 });
+
