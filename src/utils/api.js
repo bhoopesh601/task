@@ -30,8 +30,9 @@ export const API_BASE_URL = getApiBaseUrl();
  * @param {Object} options - fetch options
  */
 export const apiFetch = async (endpoint, options = {}) => {
+  const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const url = `${API_BASE_URL}${cleanEndpoint}`;
+  const url = `${baseUrl}${cleanEndpoint}`;
 
   const defaultHeaders = {
     'Content-Type': 'application/json',
@@ -51,6 +52,30 @@ export const apiFetch = async (endpoint, options = {}) => {
       },
       credentials: options.credentials || 'include',
     });
+
+    const originalJson = response.json.bind(response);
+    response.json = async () => {
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        try {
+          const text = await response.text();
+          console.warn(`Non-JSON response (${response.status}) from ${url}:`, text.substring(0, 150));
+        } catch {}
+        if (response.status === 404) {
+          return { error: `API endpoint not found (404). Please verify backend server route.` };
+        }
+        if (response.status >= 500) {
+          return { error: `Server error occurred (${response.status}). Please try again later.` };
+        }
+        return { error: response.ok ? 'Server returned non-JSON format' : `Server error (${response.status}).` };
+      }
+      try {
+        return await originalJson();
+      } catch (err) {
+        console.error(`JSON parse error from ${url}:`, err);
+        return { error: 'Unable to parse server response as JSON' };
+      }
+    };
 
     return response;
   } catch (error) {

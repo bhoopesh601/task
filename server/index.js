@@ -48,6 +48,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// API 404 Fallback
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ error: `API endpoint ${req.originalUrl} not found` });
+});
+
 // Serve frontend static assets in production
 import path from 'path';
 import { fileURLToPath } from 'url';
