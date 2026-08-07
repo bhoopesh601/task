@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import ThemeToggle from '../components/ThemeToggle';
 import { isValidEmail } from '../utils/helpers';
+import { sendOtp, resetPassword } from '../utils/api';
 import '../styles/login.css';
 
 const REGISTERED_USERS_KEY = 'registeredUsers';
@@ -38,11 +39,34 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
+  // Forgot Password Modal State
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
+  const [forgotStep, setForgotStep] = useState('email'); // 'email' | 'reset' | 'success'
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
+  const [showForgotNewPassword, setShowForgotNewPassword] = useState(false);
+  const [showForgotConfirmPassword, setShowForgotConfirmPassword] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+  const [forgotSuccessMsg, setForgotSuccessMsg] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+
   const { theme } = useTheme();
   const { login, register } = useAuth();
   const navigate = useNavigate();
 
   const isSignUp = mode === 'signup';
+
+  // Countdown timer for OTP Resend cooldown
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   const clearFieldError = (field) => {
     if (errors[field]) {
@@ -154,9 +178,120 @@ const Login = () => {
     setShowConfirmPassword(false);
   };
 
+  // Forgot Password Modal Handlers
   const onForgotPassword = (e) => {
     e.preventDefault();
-    /* TODO: route to password-reset flow */
+    setIsForgotOpen(true);
+    setForgotStep('email');
+    setForgotEmail(email.trim());
+    setForgotOtp('');
+    setForgotNewPassword('');
+    setForgotConfirmPassword('');
+    setForgotError('');
+    setForgotSuccessMsg('');
+  };
+
+  const closeForgotModal = () => {
+    setIsForgotOpen(false);
+    setForgotError('');
+    setForgotSuccessMsg('');
+  };
+
+  const handleSendForgotOtp = async (e) => {
+    e.preventDefault();
+    setForgotError('');
+
+    if (!forgotEmail.trim()) {
+      setForgotError('Please enter your account email address.');
+      return;
+    }
+    if (!isValidEmail(forgotEmail.trim())) {
+      setForgotError('Please enter a valid email address.');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const res = await sendOtp(forgotEmail.trim(), 'password-reset');
+      const data = await res.json();
+
+      if (!res.ok) {
+        setForgotError(data.error || 'Failed to send OTP. Please check the email.');
+        setForgotLoading(false);
+        return;
+      }
+
+      setForgotSuccessMsg(data.message || 'Verification code sent to your Hostinger inbox.');
+      setForgotStep('reset');
+      setResendCooldown(60);
+    } catch (err) {
+      setForgotError(err.message || 'Network error sending verification code.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0 || forgotLoading) return;
+    setForgotLoading(true);
+    setForgotError('');
+    try {
+      const res = await sendOtp(forgotEmail.trim(), 'password-reset');
+      const data = await res.json();
+
+      if (!res.ok) {
+        setForgotError(data.error || 'Failed to resend verification code.');
+      } else {
+        setResendCooldown(60);
+        setForgotSuccessMsg('A new 6-digit code has been sent to your email.');
+      }
+    } catch (err) {
+      setForgotError(err.message || 'Network error resending code.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setForgotError('');
+
+    if (!forgotOtp.trim() || forgotOtp.trim().length !== 6) {
+      setForgotError('Please enter the 6-digit code sent to your email.');
+      return;
+    }
+    if (!forgotNewPassword.trim()) {
+      setForgotError('Please enter your new password.');
+      return;
+    }
+    if (forgotNewPassword.length < 6) {
+      setForgotError('Password must be at least 6 characters.');
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setForgotError('Passwords do not match.');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const res = await resetPassword(forgotEmail.trim(), forgotOtp.trim(), forgotNewPassword);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setForgotError(data.error || 'Failed to reset password. Please check your verification code.');
+        setForgotLoading(false);
+        return;
+      }
+
+      setForgotStep('success');
+      setEmail(forgotEmail.trim());
+      setPassword(forgotNewPassword);
+    } catch (err) {
+      setForgotError(err.message || 'Network error resetting password.');
+    } finally {
+      setForgotLoading(false);
+    }
   };
 
   const isDark = theme === 'dark';
@@ -394,8 +529,285 @@ const Login = () => {
           </div>
         )}
       </div>
+
+      {/* Forgot Password Modal Dialog */}
+      {isForgotOpen && (
+        <div className="fp-overlay" onClick={closeForgotModal} role="dialog" aria-modal="true" aria-labelledby="fp-title">
+          <div className="fp-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="fp-close-btn"
+              onClick={closeForgotModal}
+              aria-label="Close dialog"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+
+            {forgotStep === 'email' && (
+              <div className="fp-content">
+                <div className="fp-icon-wrap">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E44332" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </div>
+                <h2 id="fp-title" className="fp-title">Reset your password</h2>
+                <p className="fp-subtitle">
+                  Enter the email associated with your account. We will send a 6-digit verification code to your inbox.
+                </p>
+
+                {forgotError && (
+                  <div className="fp-alert fp-alert--error" role="alert">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="8" x2="12" y2="12"/>
+                      <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <span>{forgotError}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleSendForgotOtp} className="fp-form" noValidate>
+                  <div className="lf-input-group">
+                    <label htmlFor="fp-email" className="lf-label">Email address</label>
+                    <input
+                      type="email"
+                      id="fp-email"
+                      className="lf-input"
+                      placeholder="name@example.com"
+                      value={forgotEmail}
+                      onChange={(e) => {
+                        setForgotEmail(e.target.value);
+                        if (forgotError) setForgotError('');
+                      }}
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="fp-btn-row">
+                    <button
+                      type="button"
+                      className="fp-cancel-btn"
+                      onClick={closeForgotModal}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="lf-submit-btn fp-submit-btn"
+                      disabled={forgotLoading}
+                    >
+                      {forgotLoading ? (
+                        <>
+                          <span className="lf-spinner" aria-hidden="true" />
+                          Sending code…
+                        </>
+                      ) : (
+                        'Send verification code'
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {forgotStep === 'reset' && (
+              <div className="fp-content">
+                <div className="fp-icon-wrap">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E44332" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                </div>
+                <h2 id="fp-title" className="fp-title">Enter verification code</h2>
+                <p className="fp-subtitle">
+                  We sent a 6-digit verification code to <strong>{forgotEmail}</strong>.
+                </p>
+
+                {forgotSuccessMsg && (
+                  <div className="fp-alert fp-alert--success">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <span>{forgotSuccessMsg}</span>
+                  </div>
+                )}
+
+                {forgotError && (
+                  <div className="fp-alert fp-alert--error" role="alert">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="8" x2="12" y2="12"/>
+                      <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <span>{forgotError}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleResetPassword} className="fp-form" noValidate>
+                  <div className="lf-input-group">
+                    <div className="fp-label-row">
+                      <label htmlFor="fp-otp" className="lf-label">6-Digit Code</label>
+                      <button
+                        type="button"
+                        className="fp-resend-btn"
+                        onClick={handleResendOtp}
+                        disabled={resendCooldown > 0 || forgotLoading}
+                      >
+                        {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      id="fp-otp"
+                      className="lf-input fp-otp-input"
+                      placeholder="123456"
+                      maxLength={6}
+                      inputMode="numeric"
+                      value={forgotOtp}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                        setForgotOtp(val);
+                        if (forgotError) setForgotError('');
+                      }}
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="lf-input-group">
+                    <label htmlFor="fp-new-password" className="lf-label">New password</label>
+                    <div className="lf-input-wrapper">
+                      <input
+                        type={showForgotNewPassword ? 'text' : 'password'}
+                        id="fp-new-password"
+                        className="lf-input"
+                        placeholder="At least 6 characters"
+                        value={forgotNewPassword}
+                        onChange={(e) => {
+                          setForgotNewPassword(e.target.value);
+                          if (forgotError) setForgotError('');
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="lf-password-toggle"
+                        onClick={() => setShowForgotNewPassword((prev) => !prev)}
+                        aria-label={showForgotNewPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showForgotNewPassword ? (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                            <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                            <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                            <line x1="2" y1="2" x2="22" y2="22" />
+                          </svg>
+                        ) : (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="lf-input-group">
+                    <label htmlFor="fp-confirm-password" className="lf-label">Confirm new password</label>
+                    <div className="lf-input-wrapper">
+                      <input
+                        type={showForgotConfirmPassword ? 'text' : 'password'}
+                        id="fp-confirm-password"
+                        className="lf-input"
+                        placeholder="Re-enter new password"
+                        value={forgotConfirmPassword}
+                        onChange={(e) => {
+                          setForgotConfirmPassword(e.target.value);
+                          if (forgotError) setForgotError('');
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="lf-password-toggle"
+                        onClick={() => setShowForgotConfirmPassword((prev) => !prev)}
+                        aria-label={showForgotConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                      >
+                        {showForgotConfirmPassword ? (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                            <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                            <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                            <line x1="2" y1="2" x2="22" y2="22" />
+                          </svg>
+                        ) : (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="fp-btn-row">
+                    <button
+                      type="button"
+                      className="fp-cancel-btn"
+                      onClick={() => {
+                        setForgotStep('email');
+                        setForgotError('');
+                      }}
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      className="lf-submit-btn fp-submit-btn"
+                      disabled={forgotLoading}
+                    >
+                      {forgotLoading ? (
+                        <>
+                          <span className="lf-spinner" aria-hidden="true" />
+                          Updating…
+                        </>
+                      ) : (
+                        'Save new password'
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {forgotStep === 'success' && (
+              <div className="fp-content fp-content--success">
+                <div className="fp-icon-wrap fp-icon-wrap--success">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <h2 id="fp-title" className="fp-title">Password updated!</h2>
+                <p className="fp-subtitle">
+                  Your password has been successfully reset. You can now log in to TaskFlow with your new credentials.
+                </p>
+
+                <button
+                  type="button"
+                  className="lf-submit-btn fp-submit-btn"
+                  onClick={closeForgotModal}
+                >
+                  Back to Log In
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default Login;
+

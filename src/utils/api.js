@@ -117,4 +117,17 @@ export const verifyOtp = async (email, otp) => {
   });
 };
 
+/**
+ * Reset password with verified OTP code
+ * @param {string} email
+ * @param {string} otp - 6-digit OTP code
+ * @param {string} password - New password
+ */
+export const resetPassword = async (email, otp, password) => {
+  return apiFetch('/api/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ email, otp, password }),
+  });
+};
+
 export default apiFetch;

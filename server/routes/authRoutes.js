@@ -249,7 +249,7 @@ router.put('/me', requireAuth, handleUpdateProfile);
 // In-memory store for OTPs (Email -> { otp, expiresAt })
 const otpStore = new Map();
 
-// Zod schemas for OTP validation
+// Zod schemas for OTP and Password Reset validation
 const sendOtpSchema = z.object({
   email: z.string().email('Invalid email address'),
   reason: z.string().optional(),
@@ -258,6 +258,12 @@ const sendOtpSchema = z.object({
 const verifyOtpSchema = z.object({
   email: z.string().email('Invalid email address'),
   otp: z.string().length(6, 'OTP must be 6 digits'),
+});
+
+const resetPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  otp: z.string().length(6, 'OTP must be 6 digits'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 /**
@@ -274,6 +280,16 @@ router.post('/send-otp', async (req, res) => {
 
     const { email, reason } = parseResult.data;
     const normalizedEmail = email.toLowerCase().trim();
+
+    // If password-reset, check if user exists first for immediate feedback
+    if (reason === 'password-reset') {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      });
+      if (!existingUser) {
+        return res.status(404).json({ error: 'No account found with this email address.' });
+      }
+    }
 
     // Generate random 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -350,6 +366,84 @@ router.post('/verify-otp', async (req, res) => {
   } catch (error) {
     console.error('Verify OTP error:', error);
     res.status(500).json({ error: error.message || 'Internal server error verifying OTP' });
+  }
+});
+
+/**
+ * POST /api/auth/reset-password
+ * Verifies OTP code, hashes new password with bcrypt, and updates DB
+ */
+router.post('/reset-password', async (req, res) => {
+  try {
+    const parseResult = resetPasswordSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues?.[0]?.message || 'Validation failed';
+      return res.status(400).json({ error: errorMsg });
+    }
+
+    const { email, otp, password } = parseResult.data;
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const storedData = otpStore.get(normalizedEmail);
+
+    if (!storedData) {
+      return res.status(400).json({ error: 'No verification code requested or code has expired. Please request a new OTP.' });
+    }
+
+    if (Date.now() > storedData.expiresAt) {
+      otpStore.delete(normalizedEmail);
+      return res.status(400).json({ error: 'Verification code has expired. Please request a new OTP.' });
+    }
+
+    if (storedData.otp !== otp.trim()) {
+      return res.status(400).json({ error: 'Invalid verification code. Please check and try again.' });
+    }
+
+    // Verify user exists in database
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'No account found with this email address.' });
+    }
+
+    // Hash new password using bcrypt
+    const password_hash = await hashPassword(password);
+
+    // Update password in DB
+    const updatedUser = await prisma.user.update({
+      where: { email: normalizedEmail },
+      data: { password_hash },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+      },
+    });
+
+    // Invalidate OTP after use
+    otpStore.delete(normalizedEmail);
+
+    // Generate JWT token & set cookie
+    const token = generateToken({ userId: updatedUser.id, email: updatedUser.email });
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({
+      message: 'Password has been successfully reset.',
+      user: updatedUser,
+      token,
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: error.message || 'Internal server error resetting password' });
   }
 });
 
