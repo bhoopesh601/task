@@ -7,21 +7,6 @@ import { isValidEmail } from '../utils/helpers';
 import { sendOtp, resetPassword } from '../utils/api';
 import '../styles/login.css';
 
-const REGISTERED_USERS_KEY = 'registeredUsers';
-
-const getRegisteredUsers = () => {
-  try {
-    const stored = window.localStorage.getItem(REGISTERED_USERS_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveRegisteredUser = (user) => {
-  const users = getRegisteredUsers();
-  window.localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify([...users, user]));
-};
 
 /**
  * Login Page — Clean pre-authentication portal.

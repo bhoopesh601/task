@@ -55,6 +55,7 @@
 
 /* ---- Light Theme (Todoist-inspired) ---- */
 [data-theme='light'] {
+  color-scheme: light;
   --bg-primary: #FAF8F7;
   --bg-secondary: #FFFFFF;
   --bg-tertiary: #FAF8F7;
@@ -100,6 +101,7 @@
 
 /* ---- Dark Theme ---- */
 [data-theme='dark'] {
+  color-scheme: dark;
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;
   --bg-tertiary: #1e293b;
@@ -191,6 +193,38 @@ textarea {
   font-family: var(--font-primary);
   outline: none;
   transition: all var(--transition-fast);
+}
+
+/* Suppress native Edge / IE password reveal and clear icons */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+}
+
+/* Universal autofill styling for light and dark themes */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  caret-color: var(--text-primary) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+[data-theme='dark'] input:-webkit-autofill,
+[data-theme='dark'] input:-webkit-autofill:hover, 
+[data-theme='dark'] input:-webkit-autofill:focus,
+[data-theme='dark'] input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  caret-color: var(--text-primary) !important;
 }
 
 /* ---- Scrollbar Styles ---- */
