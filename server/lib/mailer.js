@@ -12,19 +12,11 @@ dotenv.config({ override: true });
 
 /**
  * Creates and returns a Nodemailer SMTP transporter.
- * Supports Hostinger Webmail by default, and can be seamlessly switched to Gmail or any standard SMTP server via .env.
- * 
- * Hostinger Webmail defaults:
- * Host: smtp.hostinger.com
- * Port: 465 (SSL) or 587 (TLS)
- * 
- * Gmail upgrade instructions:
- * Set SMTP_HOST="smtp.gmail.com", SMTP_PORT=465, SMTP_SECURE=true
- * Set SMTP_USER="your.email@gmail.com", SMTP_PASS="your_16_digit_app_password"
+ * Supports Hostinger Webmail, Gmail, Brevo, and custom SMTP servers.
  */
 export const createTransporter = () => {
   const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
-  const port = parseInt(process.env.SMTP_PORT || '465', 10);
+  const port = parseInt(process.env.SMTP_PORT || '587', 10);
   const secure = process.env.SMTP_SECURE !== undefined ? process.env.SMTP_SECURE === 'true' : port === 465;
   const user = process.env.SMTP_USER || '';
   const pass = process.env.SMTP_PASS || '';
@@ -52,6 +44,8 @@ export const createTransporter = () => {
 
 /**
  * Sends an OTP email to the specified recipient.
+ * Automatically supports Brevo HTTP API (when key starts with xkeysib-) or Nodemailer SMTP.
+ * 
  * @param {Object} options
  * @param {string} options.to - Recipient email address
  * @param {string} options.otp - 6-digit OTP code
@@ -59,8 +53,8 @@ export const createTransporter = () => {
  * @param {string} [options.appName] - Application name (defaults to 'TaskFlow')
  */
 export const sendOtpEmail = async ({ to, otp, subject = 'Your Verification Code', appName = 'TaskFlow' }) => {
-  const transporter = createTransporter();
   const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || `noreply@taskflow.com`;
+  const pass = process.env.SMTP_PASS || '';
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -79,7 +73,7 @@ export const sendOtpEmail = async ({ to, otp, subject = 'Your Verification Code'
     </head>
     <body>
       <div class="card">
-        <div class="logo">TaskFlow</div>
+        <div class="logo">${appName}</div>
         <div class="title">Verification Code</div>
         <div class="text">Use the verification code below to complete your authentication with <strong>${appName}</strong>. This code will expire in 10 minutes.</div>
         <div class="otp-box">${otp}</div>
@@ -90,6 +84,33 @@ export const sendOtpEmail = async ({ to, otp, subject = 'Your Verification Code'
     </html>
   `;
 
+  // Brevo Direct API Mode (if key starts with xkeysib-)
+  if (pass.startsWith('xkeysib-')) {
+    const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': pass,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        sender: { email: fromEmail, name: appName },
+        to: [{ email: to }],
+        subject: `${subject} - ${otp}`,
+        htmlContent,
+        textContent: `Your ${appName} verification code is: ${otp}. It will expire in 10 minutes.`,
+      }),
+    });
+
+    const data = await brevoResponse.json();
+    if (!brevoResponse.ok) {
+      throw new Error(data.message || `Brevo API error: ${JSON.stringify(data)}`);
+    }
+    return data;
+  }
+
+  // Standard Nodemailer SMTP Mode (Hostinger, Gmail App Password, etc.)
+  const transporter = createTransporter();
   const mailOptions = {
     from: `"${appName}" <${fromEmail}>`,
     to,
@@ -103,9 +124,28 @@ export const sendOtpEmail = async ({ to, otp, subject = 'Your Verification Code'
 };
 
 /**
- * Verifies SMTP connection configuration.
+ * Verifies email connection configuration (Brevo API key or SMTP transporter).
  */
 export const verifySmtpConnection = async () => {
+  const pass = process.env.SMTP_PASS || '';
+
+  // If using Brevo API Key
+  if (pass.startsWith('xkeysib-')) {
+    try {
+      const res = await fetch('https://api.brevo.com/v3/account', {
+        headers: { 'api-key': pass },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        return { success: true, message: `Brevo API connection established successfully for ${data.email || 'account'}` };
+      }
+      return { success: false, error: data.message || 'Invalid Brevo API key' };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  }
+
+  // Standard SMTP Verify
   try {
     const transporter = createTransporter();
     await transporter.verify();
