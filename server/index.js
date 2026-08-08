@@ -7,11 +7,14 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import todoRoutes from './routes/todoRoutes.js';
 
-dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const distPath = path.join(__dirname, '../dist');
+
+// Load environment variables from task root or server folder
+dotenv.config({ path: path.join(__dirname, '../.env'), override: true });
+dotenv.config({ path: path.join(__dirname, '.env'), override: true });
+dotenv.config({ override: true });
 
 if (process.env.DATABASE_URL && !process.env.DATABASE_URL.startsWith('file:') && !process.env.DATABASE_URL.includes('://')) {
   process.env.DATABASE_URL = `file:${process.env.DATABASE_URL}`;

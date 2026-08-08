@@ -1,4 +1,14 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '../../.env'), override: true });
+dotenv.config({ path: path.join(__dirname, '../.env'), override: true });
+dotenv.config({ override: true });
 
 /**
  * Creates and returns a Nodemailer SMTP transporter.
@@ -20,16 +30,18 @@ export const createTransporter = () => {
   const pass = process.env.SMTP_PASS || '';
   const service = process.env.SMTP_SERVICE || undefined;
 
+  const auth = user && pass ? { user, pass } : undefined;
+
   const transportOptions = service
     ? {
         service,
-        auth: { user, pass },
+        ...(auth && { auth }),
       }
     : {
         host,
         port,
         secure,
-        auth: { user, pass },
+        ...(auth && { auth }),
         tls: {
           rejectUnauthorized: process.env.SMTP_REJECT_UNAUTHORIZED !== 'false',
         },

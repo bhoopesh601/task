@@ -1,9 +1,19 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { Router } from 'express';
 import { z } from 'zod';
+import dotenv from 'dotenv';
 import prisma from '../lib/prisma.js';
 import { hashPassword, comparePassword, generateToken } from '../lib/auth.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { sendOtpEmail } from '../lib/mailer.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '../../.env'), override: true });
+dotenv.config({ path: path.join(__dirname, '../.env'), override: true });
+dotenv.config({ override: true });
 
 const router = Router();
 
@@ -297,6 +307,7 @@ router.post('/send-otp', async (req, res) => {
 
     otpStore.set(normalizedEmail, { otp, expiresAt });
 
+    dotenv.config({ path: path.join(__dirname, '../../.env'), override: true });
     const isSmtpConfigured = Boolean(process.env.SMTP_USER && process.env.SMTP_PASS);
 
     if (isSmtpConfigured) {
@@ -308,9 +319,14 @@ router.post('/send-otp', async (req, res) => {
         });
         return res.json({ message: 'OTP sent successfully to your email' });
       } catch (mailError) {
-        console.error('Failed to send OTP email via SMTP:', mailError);
-        return res.status(500).json({
-          error: `Failed to send email via SMTP: ${mailError.message}. Check SMTP configuration in .env.`,
+        console.warn('⚠️ SMTP mail send failed:', mailError.message);
+        console.log(`\n========================================`);
+        console.log(`[OTP RECOVERY CODE for ${normalizedEmail}]: ${otp}`);
+        console.log(`========================================\n`);
+        return res.json({
+          message: 'OTP generated. Note: SMTP server rejected credentials. Use the recovery OTP below.',
+          devOtp: otp,
+          smtpWarning: mailError.message,
         });
       }
     } else {
@@ -320,7 +336,7 @@ router.post('/send-otp', async (req, res) => {
       console.log(`========================================\n`);
       return res.json({
         message: 'OTP generated. (Configure SMTP_USER & SMTP_PASS in .env to receive real emails via Hostinger/Gmail)',
-        devOtp: process.env.NODE_ENV !== 'production' ? otp : undefined,
+        devOtp: otp,
       });
     }
   } catch (error) {

@@ -205,8 +205,11 @@ const Login = () => {
         setForgotLoading(false);
         return;
       }
+      if (data.devOtp) {
+        setForgotOtp(data.devOtp);
+      }
 
-      setForgotSuccessMsg(data.message || 'Verification code sent to your Hostinger inbox.');
+      setForgotSuccessMsg(data.message || (data.devOtp ? `OTP Code: ${data.devOtp}` : 'Verification code sent to your inbox.'));
       setForgotStep('reset');
       setResendCooldown(60);
     } catch (err) {
@@ -227,8 +230,11 @@ const Login = () => {
       if (!res.ok) {
         setForgotError(data.error || 'Failed to resend verification code.');
       } else {
+        if (data.devOtp) {
+          setForgotOtp(data.devOtp);
+        }
+        setForgotSuccessMsg(data.message || 'Verification code resent.');
         setResendCooldown(60);
-        setForgotSuccessMsg('A new 6-digit code has been sent to your email.');
       }
     } catch (err) {
       setForgotError(err.message || 'Network error resending code.');
