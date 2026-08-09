@@ -4,13 +4,12 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import ThemeToggle from '../components/ThemeToggle';
 import { isValidEmail } from '../utils/helpers';
-import { sendOtp, resetPassword } from '../utils/api';
+import { sendOtp, verifyOtp, resetPassword } from '../utils/api';
 import '../styles/login.css';
-
 
 /**
  * Login Page — Clean pre-authentication portal.
- * Todoist-inspired split layout with toggleable Log in / Sign up modes.
+ * Todoist-inspired split layout with toggleable Log in / Sign up modes with OTP verification.
  */
 const Login = () => {
   const [mode, setMode] = useState('login');
@@ -23,6 +22,16 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+
+  // OTP Modal State for Sign Up and Login
+  const [isOtpOpen, setIsOtpOpen] = useState(false);
+  const [otpAction, setOtpAction] = useState('signup'); // 'signup' | 'login'
+  const [otpValue, setOtpValue] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState('');
+  const [otpSuccessMsg, setOtpSuccessMsg] = useState('');
+  const [otpResendCooldown, setOtpResendCooldown] = useState(0);
+  const [pendingSignupData, setPendingSignupData] = useState(null); // { name, email, password }
 
   // Forgot Password Modal State
   const [isForgotOpen, setIsForgotOpen] = useState(false);
@@ -39,12 +48,21 @@ const Login = () => {
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const { theme } = useTheme();
-  const { login, register } = useAuth();
+  const { loginWithOtp, register } = useAuth();
   const navigate = useNavigate();
 
   const isSignUp = mode === 'signup';
 
-  // Countdown timer for OTP Resend cooldown
+  // Countdown timer for Sign Up / Login OTP Resend cooldown
+  useEffect(() => {
+    if (otpResendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setOtpResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [otpResendCooldown]);
+
+  // Countdown timer for Forgot Password OTP Resend cooldown
   useEffect(() => {
     if (resendCooldown <= 0) return;
     const timer = setInterval(() => {
@@ -74,12 +92,6 @@ const Login = () => {
       newErrors.email = 'Email is required';
     } else if (!isValidEmail(email)) {
       newErrors.email = 'Please enter a valid email address';
-    }
-
-    if (!password.trim()) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
     }
 
     setErrors(newErrors);
@@ -125,12 +137,24 @@ const Login = () => {
     setErrors({});
 
     try {
-      await login(email.trim(), password);
+      const res = await sendOtp(email.trim(), 'login');
+      const data = await res.json();
       setIsLoading(false);
-      navigate('/dashboard');
+
+      if (!res.ok) {
+        setErrors({ email: data.error || 'Failed to send login verification code' });
+        return;
+      }
+
+      setOtpAction('login');
+      setOtpValue('');
+      setOtpError('');
+      setOtpSuccessMsg(data.message || 'Login verification code sent to your email.');
+      setOtpResendCooldown(60);
+      setIsOtpOpen(true);
     } catch (err) {
       setIsLoading(false);
-      setErrors({ password: err.message || 'Invalid email or password' });
+      setErrors({ email: err.message || 'Failed to initiate login. Please try again.' });
     }
   };
 
@@ -142,12 +166,29 @@ const Login = () => {
     setErrors({});
 
     try {
-      await register(name.trim(), email.trim(), password);
+      const res = await sendOtp(email.trim(), 'signup');
+      const data = await res.json();
       setIsLoading(false);
-      navigate('/dashboard');
+
+      if (!res.ok) {
+        setErrors({ email: data.error || 'Failed to send sign up verification code' });
+        return;
+      }
+
+      setPendingSignupData({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      });
+      setOtpAction('signup');
+      setOtpValue('');
+      setOtpError('');
+      setOtpSuccessMsg(data.message || 'Sign up verification code sent to your email.');
+      setOtpResendCooldown(60);
+      setIsOtpOpen(true);
     } catch (err) {
       setIsLoading(false);
-      setErrors({ email: err.message || 'Registration failed' });
+      setErrors({ email: err.message || 'Failed to initiate registration. Please try again.' });
     }
   };
 
@@ -161,6 +202,84 @@ const Login = () => {
     setConfirmPassword('');
     setShowPassword(false);
     setShowConfirmPassword(false);
+  };
+
+  // Sign Up / Login OTP Modal Handlers
+  const closeOtpModal = () => {
+    setIsOtpOpen(false);
+    setOtpError('');
+    setOtpSuccessMsg('');
+    setOtpValue('');
+  };
+
+  const handleResendOtpModal = async () => {
+    if (otpResendCooldown > 0 || otpLoading) return;
+    setOtpLoading(true);
+    setOtpError('');
+    try {
+      const targetEmail = otpAction === 'signup' ? pendingSignupData?.email || email.trim() : email.trim();
+      const res = await sendOtp(targetEmail, otpAction);
+      const data = await res.json();
+      if (!res.ok) {
+        setOtpError(data.error || 'Failed to resend verification code.');
+      } else {
+        setOtpSuccessMsg(data.message || 'Verification code resent.');
+        setOtpResendCooldown(60);
+      }
+    } catch (err) {
+      setOtpError(err.message || 'Network error resending code.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOtpSubmit = async (e) => {
+    e.preventDefault();
+    setOtpError('');
+
+    if (!otpValue.trim() || otpValue.trim().length !== 6) {
+      setOtpError('Please enter the 6-digit verification code.');
+      return;
+    }
+
+    setOtpLoading(true);
+
+    try {
+      if (otpAction === 'login') {
+        const res = await loginWithOtp(email.trim(), otpValue.trim());
+        if (res.success) {
+          setIsOtpOpen(false);
+          navigate('/dashboard');
+        }
+      } else if (otpAction === 'signup') {
+        // Step 1: Verify OTP on server
+        const verifyRes = await verifyOtp(pendingSignupData.email, otpValue.trim(), 'signup');
+        const verifyData = await verifyRes.json();
+
+        if (!verifyRes.ok) {
+          setOtpError(verifyData.error || 'Invalid verification code.');
+          setOtpLoading(false);
+          return;
+        }
+
+        // Step 2: Create user account with verified OTP
+        const regRes = await register(
+          pendingSignupData.name,
+          pendingSignupData.email,
+          pendingSignupData.password,
+          otpValue.trim()
+        );
+
+        if (regRes.success) {
+          setIsOtpOpen(false);
+          navigate('/dashboard');
+        }
+      }
+    } catch (err) {
+      setOtpError(err.message || 'Verification failed. Please try again.');
+    } finally {
+      setOtpLoading(false);
+    }
   };
 
   // Forgot Password Modal Handlers
@@ -246,6 +365,7 @@ const Login = () => {
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setForgotError('');
+
 
     if (!forgotOtp.trim() || forgotOtp.trim().length !== 6) {
       setForgotError('Please enter the 6-digit code sent to your email.');
@@ -793,6 +913,116 @@ const Login = () => {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Login & Sign Up OTP Verification Modal Dialog */}
+      {isOtpOpen && (
+        <div className="fp-overlay" onClick={closeOtpModal} role="dialog" aria-modal="true" aria-labelledby="otp-title">
+          <div className="fp-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="fp-close-btn"
+              onClick={closeOtpModal}
+              aria-label="Close dialog"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+
+            <div className="fp-content">
+              <div className="fp-icon-wrap">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E44332" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
+
+              <h2 id="otp-title" className="fp-title">
+                {otpAction === 'signup' ? 'Verify your email' : 'Login verification'}
+              </h2>
+              <p className="fp-subtitle">
+                We sent a 6-digit verification code to <strong>{otpAction === 'signup' ? pendingSignupData?.email || email : email}</strong>.
+              </p>
+
+              {otpSuccessMsg && (
+                <div className="fp-alert fp-alert--success">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <span>{otpSuccessMsg}</span>
+                </div>
+              )}
+
+              {otpError && (
+                <div className="fp-alert fp-alert--error" role="alert">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <span>{otpError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleVerifyOtpSubmit} className="fp-form" noValidate>
+                <div className="lf-input-group">
+                  <div className="fp-label-row">
+                    <label htmlFor="otp-code-input" className="lf-label">6-Digit Code</label>
+                    <button
+                      type="button"
+                      className="fp-resend-btn"
+                      onClick={handleResendOtpModal}
+                      disabled={otpResendCooldown > 0 || otpLoading}
+                    >
+                      {otpResendCooldown > 0 ? `Resend in ${otpResendCooldown}s` : 'Resend Code'}
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    id="otp-code-input"
+                    className="lf-input fp-otp-input"
+                    placeholder="123456"
+                    maxLength={6}
+                    inputMode="numeric"
+                    value={otpValue}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      setOtpValue(val);
+                      if (otpError) setOtpError('');
+                    }}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="fp-btn-row">
+                  <button
+                    type="button"
+                    className="fp-cancel-btn"
+                    onClick={closeOtpModal}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="lf-submit-btn fp-submit-btn"
+                    disabled={otpLoading}
+                  >
+                    {otpLoading ? (
+                      <>
+                        <span className="lf-spinner" aria-hidden="true" />
+                        Verifying…
+                      </>
+                    ) : (
+                      otpAction === 'signup' ? 'Verify & Create account' : 'Verify & Sign in'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

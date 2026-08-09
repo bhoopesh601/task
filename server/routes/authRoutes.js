@@ -1,5 +1,6 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 import { Router } from 'express';
 import { z } from 'zod';
 import dotenv from 'dotenv';
@@ -17,16 +18,44 @@ dotenv.config({ override: true });
 
 const router = Router();
 
+// In-memory store for OTPs (Key: `${normalizedEmail}:${action}` -> { otp, expiresAt, action, verified, verifiedAt })
+const otpStore = new Map();
+
 // Zod Validation Schemas
 const registerSchema = z.object({
   name: z.string().optional(),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  otp: z.string().length(6, 'OTP must be 6 digits').optional(),
 });
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
+});
+
+const sendOtpSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  action: z.enum(['signup', 'login', 'password-reset']).optional(),
+  reason: z.string().optional(),
+});
+
+const verifyOtpSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  otp: z.string().length(6, 'OTP must be 6 digits'),
+  action: z.enum(['signup', 'login', 'password-reset']).optional(),
+  reason: z.string().optional(),
+});
+
+const resetPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  otp: z.string().length(6, 'OTP must be 6 digits'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+const updateProfileSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email address'),
 });
 
 const handleRegister = async (req, res) => {
@@ -37,8 +66,27 @@ const handleRegister = async (req, res) => {
       return res.status(400).json({ error: errorMsg });
     }
 
-    const { name, email, password } = parseResult.data;
+    const { name, email, password, otp } = parseResult.data;
     const normalizedEmail = email.toLowerCase().trim();
+
+    // Verify Sign Up OTP verification status
+    const storeKey = `${normalizedEmail}:signup`;
+    const storedData = otpStore.get(storeKey);
+
+    if (!storedData) {
+      return res.status(400).json({ error: 'Please verify your email with the 6-digit OTP code before registering.' });
+    }
+
+    if (Date.now() > storedData.expiresAt) {
+      otpStore.delete(storeKey);
+      return res.status(400).json({ error: 'Verification code has expired. Please request a new OTP.' });
+    }
+
+    // Must either be already marked verified via /verify-otp OR matched against the provided otp in this request
+    const isDirectlyMatched = otp && storedData.otp === otp.trim() && storedData.action === 'signup';
+    if (!storedData.verified && !isDirectlyMatched) {
+      return res.status(400).json({ error: 'Email verification is required before account creation.' });
+    }
 
     // Check DB level uniqueness constraint
     const existingUser = await prisma.user.findUnique({
@@ -46,7 +94,7 @@ const handleRegister = async (req, res) => {
     });
 
     if (existingUser) {
-      return res.status(409).json({ error: 'An account with this email already exists' });
+      return res.status(409).json({ error: 'An account with this email already exists. Please log in.' });
     }
 
     // Secure password hashing using bcrypt
@@ -66,6 +114,9 @@ const handleRegister = async (req, res) => {
       },
     });
 
+    // Invalidate / delete signup verification state immediately after successful user creation
+    otpStore.delete(storeKey);
+
     // Generate JWT token & set HTTP-only cookie
     const token = generateToken({ userId: user.id, email: user.email });
 
@@ -76,7 +127,7 @@ const handleRegister = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // Send welcome confirmation email after successful registration & DB persistence
+    // Send welcome confirmation email asynchronously
     try {
       await sendWelcomeEmail({
         to: user.email,
@@ -86,7 +137,7 @@ const handleRegister = async (req, res) => {
       console.warn('⚠️ Welcome email notification failed for', user.email, ':', mailError.message);
     }
 
-    res.status(201).json({ user, token });
+    res.status(201).json({ user, token, message: 'Account created successfully' });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ error: error.message || 'Internal server error during registration' });
@@ -102,7 +153,7 @@ router.post('/signup', handleRegister);
 
 /**
  * POST /api/auth/login
- * Authenticate user, compare bcrypt hash, issue JWT cookie
+ * Direct password login fallback
  */
 router.post('/login', async (req, res) => {
   try {
@@ -200,12 +251,6 @@ router.get('/me', requireAuth, async (req, res) => {
   }
 });
 
-// Profile Update Schema
-const updateProfileSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email address'),
-});
-
 const handleUpdateProfile = async (req, res) => {
   try {
     const parseResult = updateProfileSchema.safeParse(req.body);
@@ -276,29 +321,9 @@ const handleUpdateProfile = async (req, res) => {
 router.put('/profile', requireAuth, handleUpdateProfile);
 router.put('/me', requireAuth, handleUpdateProfile);
 
-// In-memory store for OTPs (Email -> { otp, expiresAt })
-const otpStore = new Map();
-
-// Zod schemas for OTP and Password Reset validation
-const sendOtpSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  reason: z.string().optional(),
-});
-
-const verifyOtpSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  otp: z.string().length(6, 'OTP must be 6 digits'),
-});
-
-const resetPasswordSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  otp: z.string().length(6, 'OTP must be 6 digits'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
-
 /**
  * POST /api/auth/send-otp
- * Generates a 6-digit OTP code and sends it via SMTP email (Hostinger / Gmail)
+ * Generates a 6-digit OTP code and sends it via SMTP email
  */
 router.post('/send-otp', async (req, res) => {
   try {
@@ -308,11 +333,26 @@ router.post('/send-otp', async (req, res) => {
       return res.status(400).json({ error: errorMsg });
     }
 
-    const { email, reason } = parseResult.data;
+    const { email, action, reason } = parseResult.data;
+    const actionType = action || reason || 'signup';
     const normalizedEmail = email.toLowerCase().trim();
 
-    // If password-reset, check if user exists first for immediate feedback
-    if (reason === 'password-reset') {
+    // Check database based on action
+    if (actionType === 'signup') {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      });
+      if (existingUser) {
+        return res.status(409).json({ error: 'An account with this email already exists. Please log in.' });
+      }
+    } else if (actionType === 'login') {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      });
+      if (!existingUser) {
+        return res.status(404).json({ error: 'No account found with this email. Please sign up.' });
+      }
+    } else if (actionType === 'password-reset') {
       const existingUser = await prisma.user.findUnique({
         where: { email: normalizedEmail },
       });
@@ -321,43 +361,55 @@ router.post('/send-otp', async (req, res) => {
       }
     }
 
-    // Generate random 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate secure random 6-digit OTP
+    const otp = crypto.randomInt(100000, 1000000).toString();
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
 
-    otpStore.set(normalizedEmail, { otp, expiresAt });
+    const storeKey = `${normalizedEmail}:${actionType}`;
+    otpStore.set(storeKey, {
+      otp,
+      expiresAt,
+      action: actionType,
+      verified: false,
+    });
 
     dotenv.config({ path: path.join(__dirname, '../../.env'), override: true });
     const isSmtpConfigured = Boolean(process.env.SMTP_USER && process.env.SMTP_PASS);
+
+    const subjectMap = {
+      signup: 'Your Sign Up Verification Code',
+      login: 'Your Login Verification Code',
+      'password-reset': 'Password Reset Verification Code',
+    };
+    const emailSubject = subjectMap[actionType] || 'Your Verification Code';
 
     if (isSmtpConfigured) {
       try {
         await sendOtpEmail({
           to: normalizedEmail,
           otp,
-          subject: reason === 'password-reset' ? 'Password Reset Verification Code' : 'Your Verification Code',
+          subject: emailSubject,
         });
-        return res.json({ message: 'OTP sent successfully to your email' });
+        return res.json({ message: 'Verification code sent to your email' });
       } catch (mailError) {
         console.warn('⚠️ SMTP mail send failed:', mailError.message);
-        console.log(`\n========================================`);
-        console.log(`[OTP RECOVERY CODE for ${normalizedEmail}]: ${otp}`);
-        console.log(`========================================\n`);
-        return res.json({
-          message: 'OTP generated. Note: SMTP server rejected credentials. Use the recovery OTP below.',
-          devOtp: otp,
-          smtpWarning: mailError.message,
-        });
+        if (process.env.NODE_ENV !== 'production') {
+          return res.json({
+            message: 'OTP generated. Note: SMTP server rejected credentials. Use the recovery OTP below in development.',
+            devOtp: otp,
+            smtpWarning: mailError.message,
+          });
+        }
+        return res.status(500).json({ error: 'Failed to deliver verification code via email. Please check SMTP configuration.' });
       }
     } else {
-      console.log(`\n========================================`);
-      console.log(`[OTP NOTICE] SMTP credentials not fully configured in .env.`);
-      console.log(`Generated OTP for ${normalizedEmail}: ${otp}`);
-      console.log(`========================================\n`);
-      return res.json({
-        message: 'OTP generated. (Configure SMTP_USER & SMTP_PASS in .env to receive real emails via Hostinger/Gmail)',
-        devOtp: otp,
-      });
+      if (process.env.NODE_ENV !== 'production') {
+        return res.json({
+          message: 'OTP generated. (Configure SMTP_USER & SMTP_PASS in .env to receive real emails via Hostinger/Gmail)',
+          devOtp: otp,
+        });
+      }
+      return res.status(500).json({ error: 'SMTP service is not configured.' });
     }
   } catch (error) {
     console.error('Send OTP error:', error);
@@ -377,28 +429,91 @@ router.post('/verify-otp', async (req, res) => {
       return res.status(400).json({ error: errorMsg });
     }
 
-    const { email, otp } = parseResult.data;
+    const { email, otp, action, reason } = parseResult.data;
+    const actionType = action || reason || 'signup';
     const normalizedEmail = email.toLowerCase().trim();
 
-    const storedData = otpStore.get(normalizedEmail);
+    const storeKey = `${normalizedEmail}:${actionType}`;
+    const storedData = otpStore.get(storeKey);
 
     if (!storedData) {
-      return res.status(400).json({ error: 'No OTP requested for this email address or OTP has expired' });
+      return res.status(400).json({ error: 'No verification code requested for this email or code has expired. Please request a new code.' });
     }
 
     if (Date.now() > storedData.expiresAt) {
-      otpStore.delete(normalizedEmail);
-      return res.status(400).json({ error: 'OTP has expired. Please request a new code.' });
+      otpStore.delete(storeKey);
+      return res.status(400).json({ error: 'Verification code has expired. Please request a new code.' });
     }
 
     if (storedData.otp !== otp.trim()) {
       return res.status(400).json({ error: 'Invalid verification code. Please check and try again.' });
     }
 
-    // OTP verified successfully, clear from store
-    otpStore.delete(normalizedEmail);
+    if (storedData.action !== actionType) {
+      return res.status(400).json({ error: 'Verification action mismatch. Please request a new code.' });
+    }
 
-    res.json({ message: 'OTP verified successfully' });
+    if (actionType === 'login') {
+      // Invalidate OTP immediately after successful login verification
+      otpStore.delete(storeKey);
+
+      const user = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: 'No account found with this email. Please sign up.' });
+      }
+
+      const token = generateToken({ userId: user.id, email: user.email });
+
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+
+      const userPayload = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        createdAt: user.createdAt,
+      };
+
+      // Send login notification email asynchronously
+      try {
+        await sendLoginNotificationEmail({
+          to: user.email,
+          userName: user.name || user.email.split('@')[0],
+        });
+      } catch (mailError) {
+        console.warn('⚠️ Login notification email failed for', user.email, ':', mailError.message);
+      }
+
+      return res.json({ message: 'Login successful', user: userPayload, token });
+    }
+
+    if (actionType === 'signup') {
+      // Mark as verified for /api/auth/register consumption
+      otpStore.set(storeKey, {
+        ...storedData,
+        verified: true,
+        verifiedAt: Date.now(),
+      });
+      return res.json({ success: true, message: 'OTP verified successfully' });
+    }
+
+    if (actionType === 'password-reset') {
+      otpStore.set(storeKey, {
+        ...storedData,
+        verified: true,
+        verifiedAt: Date.now(),
+      });
+      return res.json({ success: true, message: 'OTP verified successfully' });
+    }
+
+    res.json({ success: true, message: 'OTP verified successfully' });
   } catch (error) {
     console.error('Verify OTP error:', error);
     res.status(500).json({ error: error.message || 'Internal server error verifying OTP' });
@@ -420,18 +535,19 @@ router.post('/reset-password', async (req, res) => {
     const { email, otp, password } = parseResult.data;
     const normalizedEmail = email.toLowerCase().trim();
 
-    const storedData = otpStore.get(normalizedEmail);
+    const storeKey = `${normalizedEmail}:password-reset`;
+    const storedData = otpStore.get(storeKey);
 
     if (!storedData) {
       return res.status(400).json({ error: 'No verification code requested or code has expired. Please request a new OTP.' });
     }
 
     if (Date.now() > storedData.expiresAt) {
-      otpStore.delete(normalizedEmail);
+      otpStore.delete(storeKey);
       return res.status(400).json({ error: 'Verification code has expired. Please request a new OTP.' });
     }
 
-    if (storedData.otp !== otp.trim()) {
+    if (!storedData.verified && storedData.otp !== otp.trim()) {
       return res.status(400).json({ error: 'Invalid verification code. Please check and try again.' });
     }
 
@@ -460,7 +576,7 @@ router.post('/reset-password', async (req, res) => {
     });
 
     // Invalidate OTP after use
-    otpStore.delete(normalizedEmail);
+    otpStore.delete(storeKey);
 
     // Generate JWT token & set cookie
     const token = generateToken({ userId: updatedUser.id, email: updatedUser.email });
@@ -484,3 +600,4 @@ router.post('/reset-password', async (req, res) => {
 });
 
 export default router;
+

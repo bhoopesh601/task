@@ -65,7 +65,26 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  // Login: strictly authenticate against /api/auth/login
+  // Login with OTP: authenticate via /api/auth/verify-otp with action 'login'
+  const loginWithOtp = useCallback(async (email, otp) => {
+    const res = await apiFetch('/api/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp, action: 'login' }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Invalid verification code');
+    }
+
+    if (data.token) localStorage.setItem('token', data.token);
+    setUser(data.user);
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
+    return { success: true, user: data.user, token: data.token };
+  }, []);
+
+  // Login: authenticate against /api/auth/login (password fallback)
   const login = useCallback(async (email, password) => {
     const res = await apiFetch('/api/auth/login', {
       method: 'POST',
@@ -78,19 +97,17 @@ export const AuthProvider = ({ children }) => {
       throw new Error(data.error || 'Invalid email or password');
     }
 
-    // Store JWT in localStorage so apiFetch can send it as Bearer header
-    // (fixes cross-origin 401s where cookies are blocked by the browser)
     if (data.token) localStorage.setItem('token', data.token);
     setUser(data.user);
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
-    return { success: true, user: data.user };
+    return { success: true, user: data.user, token: data.token };
   }, []);
 
-  // Register: strictly create user against /api/auth/register
-  const register = useCallback(async (name, email, password) => {
+  // Register: create user against /api/auth/register with verified OTP
+  const register = useCallback(async (name, email, password, otp) => {
     const res = await apiFetch('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, email, password, otp }),
     });
 
     const data = await res.json();
@@ -99,11 +116,10 @@ export const AuthProvider = ({ children }) => {
       throw new Error(data.error || 'Registration failed');
     }
 
-    // Store JWT so Bearer auth works cross-origin
     if (data.token) localStorage.setItem('token', data.token);
     setUser(data.user);
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
-    return { success: true, user: data.user };
+    return { success: true, user: data.user, token: data.token };
   }, []);
 
   // Logout: clear backend session & localStorage (including stored JWT)
@@ -144,11 +160,12 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated: !!user,
       loading,
       login,
+      loginWithOtp,
       register,
       logout,
       updateProfile,
     }),
-    [user, loading, login, register, logout, updateProfile]
+    [user, loading, login, loginWithOtp, register, logout, updateProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

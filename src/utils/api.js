@@ -94,14 +94,14 @@ export const apiFetch = async (endpoint, options = {}) => {
 };
 
 /**
- * Send OTP to user's email via Hostinger/Gmail SMTP
+ * Send OTP to user's email
  * @param {string} email
- * @param {string} [reason] - e.g. 'verification' or 'password-reset'
+ * @param {'signup' | 'login' | 'password-reset'} [action] - 'signup' | 'login' | 'password-reset'
  */
-export const sendOtp = async (email, reason = 'verification') => {
+export const sendOtp = async (email, action = 'signup') => {
   return apiFetch('/api/auth/send-otp', {
     method: 'POST',
-    body: JSON.stringify({ email, reason }),
+    body: JSON.stringify({ email, action, reason: action }),
   });
 };
 
@@ -109,11 +109,12 @@ export const sendOtp = async (email, reason = 'verification') => {
  * Verify OTP entered by user
  * @param {string} email
  * @param {string} otp - 6-digit OTP code
+ * @param {'signup' | 'login' | 'password-reset'} [action] - 'signup' | 'login' | 'password-reset'
  */
-export const verifyOtp = async (email, otp) => {
+export const verifyOtp = async (email, otp, action = 'signup') => {
   return apiFetch('/api/auth/verify-otp', {
     method: 'POST',
-    body: JSON.stringify({ email, otp }),
+    body: JSON.stringify({ email, otp, action, reason: action }),
   });
 };
 
@@ -131,3 +132,4 @@ export const resetPassword = async (email, otp, password) => {
 };
 
 export default apiFetch;
+
