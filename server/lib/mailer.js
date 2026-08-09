@@ -43,8 +43,61 @@ export const createTransporter = () => {
 };
 
 /**
- * Sends an OTP email to the specified recipient.
- * Automatically supports Brevo HTTP API (when key starts with xkeysib-) or Nodemailer SMTP.
+ * Sends a generic email to the specified recipient using Brevo HTTP API or Nodemailer SMTP.
+ * 
+ * @param {Object} options
+ * @param {string} options.to - Recipient email address
+ * @param {string} options.subject - Subject line
+ * @param {string} options.html - HTML content
+ * @param {string} options.text - Plain text content
+ * @param {string} [options.appName] - Application name
+ */
+export const sendMail = async ({ to, subject, html, text, appName = 'Todo Application' }) => {
+  const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || `noreply@taskflow.com`;
+  const pass = process.env.SMTP_PASS || '';
+
+  // Brevo Direct API Mode (if key starts with xkeysib-)
+  if (pass.startsWith('xkeysib-')) {
+    const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': pass,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        sender: { email: fromEmail, name: appName },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+        textContent: text,
+      }),
+    });
+
+    const data = await brevoResponse.json();
+    if (!brevoResponse.ok) {
+      throw new Error(data.message || `Brevo API error: ${JSON.stringify(data)}`);
+    }
+    return data;
+  }
+
+  // Standard Nodemailer SMTP Mode (Hostinger, Gmail App Password, etc.)
+  const transporter = createTransporter();
+  const mailOptions = {
+    from: `"${appName}" <${fromEmail}>`,
+    to,
+    subject,
+    html,
+    text,
+  };
+
+  const info = await transporter.sendMail(mailOptions);
+  return info;
+};
+
+/**
+ * Sends an OTP email to the specified recipient (Forgot Password / Verification).
+ * Preserves existing template and flow.
  * 
  * @param {Object} options
  * @param {string} options.to - Recipient email address
@@ -53,9 +106,6 @@ export const createTransporter = () => {
  * @param {string} [options.appName] - Application name (defaults to 'TaskFlow')
  */
 export const sendOtpEmail = async ({ to, otp, subject = 'Your Verification Code', appName = 'TaskFlow' }) => {
-  const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || `noreply@taskflow.com`;
-  const pass = process.env.SMTP_PASS || '';
-
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -84,43 +134,113 @@ export const sendOtpEmail = async ({ to, otp, subject = 'Your Verification Code'
     </html>
   `;
 
-  // Brevo Direct API Mode (if key starts with xkeysib-)
-  if (pass.startsWith('xkeysib-')) {
-    const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'api-key': pass,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        sender: { email: fromEmail, name: appName },
-        to: [{ email: to }],
-        subject: `${subject} - ${otp}`,
-        htmlContent,
-        textContent: `Your ${appName} verification code is: ${otp}. It will expire in 10 minutes.`,
-      }),
-    });
+  const textContent = `Your ${appName} verification code is: ${otp}. It will expire in 10 minutes.`;
 
-    const data = await brevoResponse.json();
-    if (!brevoResponse.ok) {
-      throw new Error(data.message || `Brevo API error: ${JSON.stringify(data)}`);
-    }
-    return data;
-  }
-
-  // Standard Nodemailer SMTP Mode (Hostinger, Gmail App Password, etc.)
-  const transporter = createTransporter();
-  const mailOptions = {
-    from: `"${appName}" <${fromEmail}>`,
+  return await sendMail({
     to,
     subject: `${subject} - ${otp}`,
     html: htmlContent,
-    text: `Your ${appName} verification code is: ${otp}. It will expire in 10 minutes.`,
-  };
+    text: textContent,
+    appName,
+  });
+};
 
-  const info = await transporter.sendMail(mailOptions);
-  return info;
+/**
+ * Sends a Login Notification email upon successful login.
+ * 
+ * @param {Object} options
+ * @param {string} options.to - Recipient email address
+ * @param {string} [options.userName] - Recipient user name
+ * @param {string} [options.appName] - Application name
+ */
+export const sendLoginNotificationEmail = async ({ to, userName = 'User', appName = 'Todo Application' }) => {
+  const subject = 'Login Notification';
+  const textContent = `Hello ${userName},\n\nA successful login was detected on your Todo account.\n\nIf this was not you, please secure your account.\n\nRegards,\n${appName}`;
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; color: #333; }
+        .card { max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .logo { font-size: 24px; font-weight: bold; color: #E44332; margin-bottom: 24px; text-align: center; }
+        .title { font-size: 20px; font-weight: 600; margin-bottom: 12px; color: #111827; }
+        .text { font-size: 15px; color: #4b5563; line-height: 1.6; margin-bottom: 20px; }
+        .footer { font-size: 13px; color: #9ca3af; text-align: center; margin-top: 32px; border-top: 1px solid #f3f4f6; padding-top: 16px; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <div class="logo">${appName}</div>
+        <div class="title">Login Notification</div>
+        <div class="text">Hello ${userName},</div>
+        <div class="text">A successful login was detected on your Todo account.</div>
+        <div class="text">If this was not you, please secure your account.</div>
+        <div class="text">Regards,<br><strong>${appName}</strong></div>
+        <div class="footer">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return await sendMail({
+    to,
+    subject,
+    html: htmlContent,
+    text: textContent,
+    appName,
+  });
+};
+
+/**
+ * Sends a Welcome / Registration Confirmation email upon successful sign up.
+ * 
+ * @param {Object} options
+ * @param {string} options.to - Recipient email address
+ * @param {string} [options.userName] - Recipient user name
+ * @param {string} [options.appName] - Application name
+ */
+export const sendWelcomeEmail = async ({ to, userName = 'User', appName = 'Todo Application' }) => {
+  const subject = 'Welcome to Todo Application';
+  const textContent = `Hello ${userName},\n\nYour Todo account has been successfully created.\n\nYou can now log in and start managing your tasks.\n\nRegards,\n${appName}`;
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; color: #333; }
+        .card { max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .logo { font-size: 24px; font-weight: bold; color: #E44332; margin-bottom: 24px; text-align: center; }
+        .title { font-size: 20px; font-weight: 600; margin-bottom: 12px; color: #111827; }
+        .text { font-size: 15px; color: #4b5563; line-height: 1.6; margin-bottom: 20px; }
+        .footer { font-size: 13px; color: #9ca3af; text-align: center; margin-top: 32px; border-top: 1px solid #f3f4f6; padding-top: 16px; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <div class="logo">${appName}</div>
+        <div class="title">Welcome to Todo Application</div>
+        <div class="text">Hello ${userName},</div>
+        <div class="text">Your Todo account has been successfully created.</div>
+        <div class="text">You can now log in and start managing your tasks.</div>
+        <div class="text">Regards,<br><strong>${appName}</strong></div>
+        <div class="footer">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return await sendMail({
+    to,
+    subject,
+    html: htmlContent,
+    text: textContent,
+    appName,
+  });
 };
 
 /**
@@ -157,6 +277,9 @@ export const verifySmtpConnection = async () => {
 
 export default {
   createTransporter,
+  sendMail,
   sendOtpEmail,
+  sendLoginNotificationEmail,
+  sendWelcomeEmail,
   verifySmtpConnection,
 };

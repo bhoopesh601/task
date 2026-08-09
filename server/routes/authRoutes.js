@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import prisma from '../lib/prisma.js';
 import { hashPassword, comparePassword, generateToken } from '../lib/auth.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
-import { sendOtpEmail } from '../lib/mailer.js';
+import { sendOtpEmail, sendWelcomeEmail, sendLoginNotificationEmail } from '../lib/mailer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -76,6 +76,16 @@ const handleRegister = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
+    // Send welcome confirmation email after successful registration & DB persistence
+    try {
+      await sendWelcomeEmail({
+        to: user.email,
+        userName: user.name || user.email.split('@')[0],
+      });
+    } catch (mailError) {
+      console.warn('⚠️ Welcome email notification failed for', user.email, ':', mailError.message);
+    }
+
     res.status(201).json({ user, token });
   } catch (error) {
     console.error('Registration error:', error);
@@ -133,6 +143,16 @@ router.post('/login', async (req, res) => {
       email: user.email,
       createdAt: user.createdAt,
     };
+
+    // Send login notification email after successful authentication
+    try {
+      await sendLoginNotificationEmail({
+        to: user.email,
+        userName: user.name || user.email.split('@')[0],
+      });
+    } catch (mailError) {
+      console.warn('⚠️ Login notification email failed for', user.email, ':', mailError.message);
+    }
 
     res.json({ user: userPayload, token });
   } catch (error) {
