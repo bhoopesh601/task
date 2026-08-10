@@ -215,16 +215,27 @@ const DashboardOverview = ({ onNavigateToTodos, onEditTodo }) => {
       {/* Calendar Section */}
       <div className="calendar-section">
         <div className="calendar-card">
-          <div className="calendar-header">
-            <div className="calendar-title-group">
-              <h3>Task Due Date Calendar</h3>
-              <span className="card-subtitle">Select a date to view scheduled tasks</span>
+          <div className="calendar-header-mobile">
+            <div className="cal-current-date-display">
+              <span className="cal-date-bold">
+                {selectedDateStr ? (() => {
+                  const [y, m, d] = selectedDateStr.split('-');
+                  return `${parseInt(d)} ${monthNames[parseInt(m) - 1].substring(0,3)}, ${y.substring(2)}`;
+                })() : (() => {
+                  return `${currentDate.getDate()} ${monthNames[currentDate.getMonth()].substring(0,3)}, ${currentDate.getFullYear().toString().substring(2)}`;
+                })()}
+              </span>
+              <span className="cal-date-sub">
+                {selectedDateStr ? (() => {
+                  const [y, m, d] = selectedDateStr.split('-');
+                  return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).getDay()];
+                })() : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][currentDate.getDay()]}
+              </span>
             </div>
             <div className="calendar-controls">
               <button type="button" className="cal-nav-btn" onClick={handlePrevMonth} title="Previous Month">
                 ‹
               </button>
-              <span className="current-month-label">{monthNames[month]} {year}</span>
               <button type="button" className="cal-nav-btn" onClick={handleNextMonth} title="Next Month">
                 ›
               </button>
@@ -271,45 +282,47 @@ const DashboardOverview = ({ onNavigateToTodos, onEditTodo }) => {
           </div>
 
           {/* Tasks due on selected date drawer */}
-          {selectedDateStr && (
-            <div className="cal-selected-panel">
-              <div className="cal-selected-header">
-                <h4>Tasks due on {formatDate(selectedDateStr)}</h4>
-                <button
-                  type="button"
-                  className="cal-close-btn"
-                  onClick={() => setSelectedDateStr(null)}
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="cal-selected-list">
-                {selectedDateTasks.length > 0 ? (
-                  selectedDateTasks.map((todo) => (
-                    <div key={todo.id} className="cal-todo-item">
+          <div className="cal-selected-panel-mobile">
+            <div className="cal-selected-header-mobile">
+              <h4>Today's Task <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></h4>
+              <button
+                type="button"
+                className="cal-add-fab"
+                onClick={() => document.querySelector('.add-todo-btn')?.click()} // Attempt to click the main add button if present, or just leave it as UI
+              >
+                +
+              </button>
+            </div>
+            <div className="cal-selected-list-mobile">
+              {selectedDateTasks.length > 0 ? (
+                selectedDateTasks.map((todo) => (
+                  <div key={todo.id} className="cal-todo-item-mobile">
+                    <div className="cal-todo-icon-wrapper">
                       <input
                         type="checkbox"
                         checked={todo.status === 'Completed'}
                         onChange={() => toggleStatus(todo.id)}
-                        className="todo-checkbox"
+                        className="todo-radio-mobile"
                       />
-                      <div className="cal-todo-info">
-                        <span className={`cal-todo-title ${todo.status === 'Completed' ? 'completed' : ''}`}>
-                          {todo.title}
-                        </span>
-                        <span className="cal-todo-meta">
-                          <PriorityIcon priority={todo.priority} size={13} style={{ marginRight: 4 }} />
-                          Priority: {todo.priority} | Status: {todo.status}
-                        </span>
-                      </div>
                     </div>
-                  ))
-                ) : (
-                  <p className="cal-no-tasks">No tasks due on this date.</p>
-                )}
-              </div>
+                    <div className="cal-todo-info-mobile">
+                      <span className="cal-todo-category">
+                        {todo.priority === 'High' ? 'Important' : todo.priority === 'Medium' ? 'Reminder' : 'To Do'}
+                      </span>
+                      <span className={`cal-todo-title-mobile ${todo.status === 'Completed' ? 'completed' : ''}`}>
+                        {todo.title}
+                      </span>
+                      <span className="cal-todo-time-mobile">
+                        {formatDate(todo.dueDate)}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="cal-no-tasks-mobile">No tasks due on this date.</p>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

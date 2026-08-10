@@ -4,28 +4,28 @@
    =================================================== */
 
 :root {
-  --login-brand:       #E44332;
+  --login-brand: #E44332;
   --login-brand-hover: #D14233;
   --login-brand-light: rgba(228, 67, 50, 0.08);
-  --login-form-bg:     #FFFFFF;
-  --login-visual-bg:   linear-gradient(135deg, #FFF8F5 0%, #FAF0EB 50%, #F5E6DE 100%);
-  --login-text:        #111111;
-  --login-subtext:     #666666;
+  --login-form-bg: #FFFFFF;
+  --login-visual-bg: linear-gradient(135deg, #FFF8F5 0%, #FAF0EB 50%, #F5E6DE 100%);
+  --login-text: #111111;
+  --login-subtext: #666666;
   --login-placeholder: #999999;
-  --login-border:      #EAEAEA;
-  --login-input-bg:    #FFFFFF;
+  --login-border: #EAEAEA;
+  --login-input-bg: #FFFFFF;
   --login-input-hover-border: #D5D5D5;
   --login-checkbox-bg: #FFFFFF;
   --login-checkbox-border: #D1D5DB;
-  --login-card-bg:     #FFFFFF;
-  --login-card-line:   #F0F0F0;
+  --login-card-bg: #FFFFFF;
+  --login-card-line: #F0F0F0;
   --login-card-shadow: rgba(0, 0, 0, 0.04);
   --login-badge-shadow: rgba(228, 67, 50, 0.12);
-  --login-toggle-bg:   rgba(0, 0, 0, 0.04);
+  --login-toggle-bg: rgba(0, 0, 0, 0.04);
   --login-toggle-hover: rgba(0, 0, 0, 0.08);
   --login-toggle-color: #666666;
-  --login-radius:      8px;
-  --login-transition:  0.15s ease;
+  --login-radius: 8px;
+  --login-transition: 0.15s ease;
 }
 
 .login-page {
@@ -39,22 +39,22 @@
 
 .login-page--dark {
   color-scheme: dark;
-  --login-form-bg:     #121212;
-  --login-visual-bg:   linear-gradient(135deg, #121212 0%, #1A1A1A 50%, #1E1E1E 100%);
-  --login-text:        #F5F5F5;
-  --login-subtext:     #B0B0B0;
+  --login-form-bg: #121212;
+  --login-visual-bg: linear-gradient(135deg, #121212 0%, #1A1A1A 50%, #1E1E1E 100%);
+  --login-text: #F5F5F5;
+  --login-subtext: #B0B0B0;
   --login-placeholder: #757575;
-  --login-border:      #333333;
+  --login-border: #333333;
   --login-brand-light: rgba(228, 67, 50, 0.18);
-  --login-input-bg:    #1E1E1E;
+  --login-input-bg: #1E1E1E;
   --login-input-hover-border: #444444;
   --login-checkbox-bg: #1E1E1E;
   --login-checkbox-border: #555555;
-  --login-card-bg:     #1E1E1E;
-  --login-card-line:   #333333;
+  --login-card-bg: #1E1E1E;
+  --login-card-line: #333333;
   --login-card-shadow: rgba(0, 0, 0, 0.35);
   --login-badge-shadow: rgba(228, 67, 50, 0.25);
-  --login-toggle-bg:   rgba(255, 255, 255, 0.08);
+  --login-toggle-bg: rgba(255, 255, 255, 0.08);
   --login-toggle-hover: rgba(255, 255, 255, 0.14);
   --login-toggle-color: #E0E0E0;
 }
@@ -153,7 +153,7 @@
 
 /* Autofill fixes for Light and Dark themes */
 .login-page input:-webkit-autofill,
-.login-page input:-webkit-autofill:hover, 
+.login-page input:-webkit-autofill:hover,
 .login-page input:-webkit-autofill:focus,
 .login-page input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 1000px var(--login-input-bg) inset !important;
@@ -169,7 +169,7 @@
 }
 
 .login-page--dark input:-webkit-autofill,
-.login-page--dark input:-webkit-autofill:hover, 
+.login-page--dark input:-webkit-autofill:hover,
 .login-page--dark input:-webkit-autofill:focus,
 .login-page--dark input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 1000px var(--login-input-bg) inset !important;
@@ -356,7 +356,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .lf-signup-prompt {
@@ -454,9 +456,17 @@
   transition: background-color 0.25s ease;
 }
 
-.visual-card-line--long  { width: 85%; }
-.visual-card-line--medium { width: 65%; }
-.visual-card-line--short  { width: 40%; }
+.visual-card-line--long {
+  width: 85%;
+}
+
+.visual-card-line--medium {
+  width: 65%;
+}
+
+.visual-card-line--short {
+  width: 40%;
+}
 
 .login-visual-badge {
   position: absolute;
@@ -516,8 +526,13 @@
 }
 
 @keyframes fpFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .fp-modal {
@@ -537,6 +552,7 @@
     opacity: 0;
     transform: translateY(16px) scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -700,4 +716,3 @@
   width: 100%;
   margin-top: 16px;
 }
-

@@ -8,10 +8,10 @@ const Stats = () => {
   const { stats } = useTodos();
 
   const statCards = [
-    { label: 'Total', value: stats.total, className: 'stat-card-1' },
-    { label: 'Completed', value: stats.completed, className: 'stat-card-2' },
-    { label: 'Pending', value: stats.pending, className: 'stat-card-3' },
-    { label: 'High Priority', value: stats.highPriority, className: 'stat-card-4' },
+    { label: 'Total', value: stats.total, className: 'stat-card-total stat-card-1' },
+    { label: 'Completed', value: stats.completed, className: 'stat-card-completed stat-card-2' },
+    { label: 'Pending', value: stats.pending, className: 'stat-card-pending stat-card-3' },
+    { label: 'High Priority', value: stats.highPriority, className: 'stat-card-high-priority stat-card-4' },
   ];
 
   return (

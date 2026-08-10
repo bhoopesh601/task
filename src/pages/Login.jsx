@@ -418,9 +418,9 @@ const Login = () => {
           <div className="login-brand">
             <span className="login-brand-icon" aria-hidden="true">
               <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <rect x="4" y="6" width="20" height="3" rx="1.5" fill="#E44332"/>
-                <rect x="4" y="12.5" width="20" height="3" rx="1.5" fill="#E44332" opacity="0.75"/>
-                <rect x="4" y="19" width="20" height="3" rx="1.5" fill="#E44332" opacity="0.5"/>
+                <rect x="4" y="6" width="20" height="3" rx="1.5" fill="#E44332" />
+                <rect x="4" y="12.5" width="20" height="3" rx="1.5" fill="#E44332" opacity="0.75" />
+                <rect x="4" y="19" width="20" height="3" rx="1.5" fill="#E44332" opacity="0.5" />
               </svg>
             </span>
             <span className="login-brand-name">TaskFlow</span>
@@ -629,7 +629,7 @@ const Login = () => {
           </div>
           <div className="login-visual-badge">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E44332" strokeWidth="2.5">
-              <polyline points="20 6 9 17 4 12"/>
+              <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
         </div>
@@ -661,8 +661,8 @@ const Login = () => {
               <div className="fp-content">
                 <div className="fp-icon-wrap">
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E44332" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
                 </div>
                 <h2 id="fp-title" className="fp-title">Reset your password</h2>
@@ -673,9 +673,9 @@ const Login = () => {
                 {forgotError && (
                   <div className="fp-alert fp-alert--error" role="alert">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <line x1="12" y1="8" x2="12" y2="12"/>
-                      <line x1="12" y1="16" x2="12.01" y2="16"/>
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                     <span>{forgotError}</span>
                   </div>
@@ -729,8 +729,8 @@ const Login = () => {
               <div className="fp-content">
                 <div className="fp-icon-wrap">
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E44332" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                    <polyline points="22,6 12,13 2,6"/>
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
                   </svg>
                 </div>
                 <h2 id="fp-title" className="fp-title">Enter verification code</h2>
@@ -741,7 +741,7 @@ const Login = () => {
                 {forgotSuccessMsg && (
                   <div className="fp-alert fp-alert--success">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="20 6 9 17 4 12"/>
+                      <polyline points="20 6 9 17 4 12" />
                     </svg>
                     <span>{forgotSuccessMsg}</span>
                   </div>
@@ -750,9 +750,9 @@ const Login = () => {
                 {forgotError && (
                   <div className="fp-alert fp-alert--error" role="alert">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <line x1="12" y1="8" x2="12" y2="12"/>
-                      <line x1="12" y1="16" x2="12.01" y2="16"/>
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                     <span>{forgotError}</span>
                   </div>
@@ -896,7 +896,7 @@ const Login = () => {
               <div className="fp-content fp-content--success">
                 <div className="fp-icon-wrap fp-icon-wrap--success">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
+                    <polyline points="20 6 9 17 4 12" />
                   </svg>
                 </div>
                 <h2 id="fp-title" className="fp-title">Password updated!</h2>
@@ -936,8 +936,8 @@ const Login = () => {
             <div className="fp-content">
               <div className="fp-icon-wrap">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E44332" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                  <polyline points="22,6 12,13 2,6" />
                 </svg>
               </div>
 
@@ -951,7 +951,7 @@ const Login = () => {
               {otpSuccessMsg && (
                 <div className="fp-alert fp-alert--success">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="20 6 9 17 4 12"/>
+                    <polyline points="20 6 9 17 4 12" />
                   </svg>
                   <span>{otpSuccessMsg}</span>
                 </div>
@@ -960,9 +960,9 @@ const Login = () => {
               {otpError && (
                 <div className="fp-alert fp-alert--error" role="alert">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
                   </svg>
                   <span>{otpError}</span>
                 </div>
