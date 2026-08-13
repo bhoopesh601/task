@@ -954,7 +954,7 @@
   }
 
   .dashboard {
-    padding: 24px 20px 80px; /* added bottom padding for fixed nav */
+    padding: 24px 20px 120px; /* added bottom padding for fixed nav */
   }
 
   .dashboard-header h1 {
