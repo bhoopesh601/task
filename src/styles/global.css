@@ -293,7 +293,7 @@ select:-webkit-autofill:focus {
 
 /* Dark mode button: Filled rounded square with dark bg and solid white moon */
 .theme-toggle-btn--dark {
-  background: #2b2b2b;
+  background: var(--bg-primary);
   border: 1.5px solid #383838;
   color: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);

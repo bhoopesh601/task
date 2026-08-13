@@ -143,13 +143,51 @@
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
-  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .sidebar-logout-btn:hover {
   background: var(--accent-primary-light);
   border-color: var(--accent-primary);
   color: var(--accent-primary);
+}
+
+/* ---- Collapsed Sidebar Styles ---- */
+.sidebar {
+  transition: width var(--transition-normal);
+  overflow: hidden;
+}
+
+.sidebar.collapsed {
+  width: 72px;
+}
+
+.sidebar.collapsed .sidebar-title,
+.sidebar.collapsed .sidebar-user-email,
+.sidebar.collapsed .nav-text {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-brand {
+  padding: 4px 0;
+  justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-user {
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.sidebar.collapsed .sidebar-nav-item,
+.sidebar.collapsed .sidebar-logout-btn {
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.sidebar.collapsed .sidebar-logout-btn {
+  border: 1px solid transparent;
 }
 
 /* ---- Dashboard Main ---- */
@@ -175,78 +213,101 @@
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 16px;
   margin-bottom: 28px;
 }
 
-.stat-card {
-  padding: 16px 18px;
-  border-radius: var(--radius-md);
+.stat-card.modern-stat-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-radius: 12px;
   background: var(--stat-card-bg, #FFFFFF);
   border: 1px solid var(--stat-card-border, #E2E8F0);
-  box-shadow: var(--card-shadow);
-  color: var(--text-primary);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.stat-card:hover {
-  border-color: #CBD5E1;
-  transform: none;
-  box-shadow: var(--card-shadow);
+.stat-card.modern-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
 }
 
-[data-theme='dark'] .stat-card {
+[data-theme='dark'] .stat-card.modern-stat-card {
   background: var(--stat-card-bg, #1E293B);
   border-color: var(--stat-card-border, #334155);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
-[data-theme='dark'] .stat-card:hover {
-  border-color: #475569;
+.modern-stat-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.stat-card::after {
-  display: none;
-}
-
-.stat-card-icon {
-  display: none;
-}
-
-.stat-card-value {
-  font-size: 1.75rem;
+.modern-stat-value {
+  font-size: 2.5rem;
   font-weight: 700;
+  color: var(--text-primary);
   line-height: 1;
-  margin-bottom: 4px;
 }
 
-/* High contrast metric status colors */
-.stat-card-1 .stat-card-value,
-.stat-card-total .stat-card-value {
-  color: var(--stat-total, #1E293B);
+.modern-stat-text {
+  display: flex;
+  flex-direction: column;
 }
 
-.stat-card-2 .stat-card-value,
-.stat-card-completed .stat-card-value {
-  color: var(--stat-completed, #16A34A);
+.modern-stat-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
 }
 
-.stat-card-3 .stat-card-value,
-.stat-card-pending .stat-card-value {
-  color: var(--stat-pending, #D97706);
-}
-
-.stat-card-4 .stat-card-value,
-.stat-card-high-priority .stat-card-value {
-  color: var(--stat-high-priority, #DC2626);
-}
-
-.stat-card-label {
+.modern-stat-subtitle {
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--stat-card-label, #64748B);
-  text-transform: none;
-  letter-spacing: 0;
-  opacity: 1;
+  color: var(--text-tertiary, #9ca3af);
+  margin-top: 4px;
+}
+
+.modern-stat-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circular-progress {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circular-progress svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.circular-progress circle {
+  transition: stroke-dashoffset 0.5s ease-in-out;
+}
+
+[data-theme='dark'] .circular-progress circle[stroke="#f0f0f0"] {
+  stroke: #334155;
+}
+
+.circular-progress-text {
+  position: relative;
+  font-size: 0.7rem;
+  font-weight: 700;
+  z-index: 1;
 }
 
 /* ---- Controls Bar ---- */
@@ -1011,7 +1072,7 @@
 }
 
 .dot-completed {
-  background: var(--accent-primary);
+  background: var(--status-completed);
 }
 
 .dot-pending {

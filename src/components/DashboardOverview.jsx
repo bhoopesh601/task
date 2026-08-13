@@ -125,7 +125,7 @@ const DashboardOverview = ({ onNavigateToTodos, onEditTodo }) => {
                 cy="70"
                 r={doughnutRadius}
                 fill="none"
-                stroke="var(--accent-primary)"
+                stroke="var(--status-completed)"
                 strokeWidth="16"
                 strokeDasharray={doughnutCircumference}
                 strokeDashoffset={completedStrokeOffset}

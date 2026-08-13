@@ -1,28 +1,12 @@
 import { useTodos } from '../context/TodoContext';
-import PriorityIcon from './PriorityIcon';
+import FilterMenu from './FilterMenu';
 
 /**
  * SearchBar - Provides instant search over todo titles and descriptions.
- * Also includes filter chips and sort dropdown.
+ * Also includes the filter menu dropdown.
  */
 const SearchBar = ({ onAddClick }) => {
-  const {
-    searchQuery,
-    setSearchQuery,
-    activeFilter,
-    setActiveFilter,
-    sortBy,
-    setSortBy,
-  } = useTodos();
-
-  const filters = [
-    { key: 'all', label: 'All' },
-    { key: 'pending', label: 'Pending' },
-    { key: 'completed', label: 'Completed' },
-    { key: 'high', label: 'High' },
-    { key: 'medium', label: 'Medium' },
-    { key: 'low', label: 'Low' },
-  ];
+  const { searchQuery, setSearchQuery } = useTodos();
 
   return (
     <div className="controls-bar" id="controls-bar">
@@ -55,35 +39,8 @@ const SearchBar = ({ onAddClick }) => {
       </div>
 
       <div className="controls-right">
-        {/* Filter chips */}
-        <div className="filter-chips" id="filter-chips">
-          {filters.map((filter) => (
-            <button
-              key={filter.key}
-              className={`filter-chip ${activeFilter === filter.key ? 'active' : ''}`}
-              onClick={() => setActiveFilter(filter.key)}
-              id={`filter-${filter.key}`}
-            >
-              {['high', 'medium', 'low'].includes(filter.key) && (
-                <PriorityIcon priority={filter.key} size={14} style={{ marginRight: 5 }} />
-              )}
-              {filter.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Sort dropdown */}
-        <select
-          className="select-field"
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          id="sort-select"
-        >
-          <option value="latest">Latest Created</option>
-          <option value="dueDate">Due Date</option>
-          <option value="priority">Priority</option>
-          <option value="alphabetical">Alphabetical</option>
-        </select>
+        {/* Custom Filter & Sort Menu */}
+        <FilterMenu />
 
         {/* Add Todo button */}
         <button className="add-todo-btn" onClick={onAddClick} id="add-todo-btn">

@@ -27,6 +27,7 @@ const Dashboard = () => {
   } = useTodos();
 
   const [activeNav, setActiveNav] = useState('dashboard');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Modal states
   const [showFormModal, setShowFormModal] = useState(false);
@@ -73,8 +74,13 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="app-layout page-enter" id="dashboard-page">
-      <Navbar activeNav={activeNav} onSelectNav={setActiveNav} />
+    <div className={`app-layout page-enter ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`} id="dashboard-page">
+      <Navbar
+        activeNav={activeNav}
+        onSelectNav={setActiveNav}
+        isCollapsed={isSidebarCollapsed}
+        onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+      />
 
       <div className="app-main">
         <main className="dashboard">
@@ -116,8 +122,8 @@ const Dashboard = () => {
                   <div className="empty-state" id="empty-state">
                     <div className="empty-state-icon" aria-hidden="true">
                       <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                        <rect x="12" y="20" width="40" height="32" rx="6" fill="#FDF0ED" stroke="#EAEAEA"/>
-                        <path d="M20 32h24M20 40h16" stroke="#E44332" strokeWidth="2" strokeLinecap="round" opacity="0.4"/>
+                        <rect x="12" y="20" width="40" height="32" rx="6" fill="#FDF0ED" stroke="#EAEAEA" />
+                        <path d="M20 32h24M20 40h16" stroke="#E44332" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
                       </svg>
                     </div>
                     <h3>No todos found</h3>
