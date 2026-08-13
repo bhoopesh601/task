@@ -103,8 +103,6 @@ const Dashboard = () => {
                 <h1>My Todos</h1>
               </div>
 
-              <Stats />
-
               <SearchBar onAddClick={handleAddClick} />
 
               <div className="todo-list" id="todo-grid">

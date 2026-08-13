@@ -15,7 +15,7 @@ const Stats = () => {
   const statCards = [
     { label: 'Total', subtitle: '(all tasks)', value: stats.total, percentage: stats.total === 0 ? 0 : 100, color: '#7c76d9' },
     { label: 'Completed', subtitle: '(tasks)', value: stats.completed, percentage: getPercentage(stats.completed, stats.total), color: 'var(--status-completed)' },
-    { label: 'Pending', subtitle: '(tasks)', value: stats.pending, percentage: getPercentage(stats.pending, stats.total), color: '#d6d8db' },
+    { label: 'Pending', subtitle: '(tasks)', value: stats.pending, percentage: getPercentage(stats.pending, stats.total), color: 'var(--status-pending)' },
     { label: 'High Priority', subtitle: '(tasks)', value: stats.highPriority, percentage: getPercentage(stats.highPriority, stats.total), color: 'var(--priority-high)' },
   ];
 
