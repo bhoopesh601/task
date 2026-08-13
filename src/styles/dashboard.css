@@ -6,7 +6,8 @@
 /* ---- App Layout ---- */
 .app-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: var(--bg-primary);
 }
 
@@ -16,6 +17,7 @@
   flex-direction: column;
   min-width: 0;
   background: var(--bg-secondary);
+  overflow-y: auto;
 }
 
 /* ---- Mobile Top Header ---- */
